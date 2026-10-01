@@ -3,7 +3,6 @@ import type { Language } from '$lib/i18n';
 export interface Translations {
 	topBar: {
 		downloadPdf: string;
-		sourceCode: string;
 		available: string;
 	};
 	resume: {
@@ -15,7 +14,6 @@ const translations: Record<Language, Translations> = {
 	en: {
 		topBar: {
 			downloadPdf: 'PDF',
-			sourceCode: 'Source',
 			available: 'Available'
 		},
 		resume: {
@@ -25,7 +23,6 @@ const translations: Record<Language, Translations> = {
 	sv: {
 		topBar: {
 			downloadPdf: 'PDF',
-			sourceCode: 'Källa',
 			available: 'Tillgänglig'
 		},
 		resume: {

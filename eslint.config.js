@@ -35,9 +35,9 @@ export default defineConfig(
 	},
 	{
 		rules: {
-			// This app is a static SPA served at the nginx root (no `base` path), so
-			// wrapping internal hrefs in resolve() would be an identity no-op. Plain
-			// <a href> links are the convention here.
+			// The app is served at the site root (no `base` path), so wrapping internal
+			// hrefs in resolve() would be an identity no-op. Plain <a href> links are the
+			// convention here.
 			'svelte/no-navigation-without-resolve': 'off'
 		}
 	}
