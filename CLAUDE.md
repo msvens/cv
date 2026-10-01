@@ -30,8 +30,11 @@ and schema.
   actions progressively enhanced with `use:enhance`. Loads re-run after an enhanced submit, so no
   manual cache invalidation is needed. Don't use remote functions (still experimental).
 - **Server-only code lives in `$lib/server/`** (db client, schema, services, pdf, auth). SvelteKit
-  refuses to bundle it into the client. Env vars come from `$env/dynamic/private` (runtime, not
-  baked into the build), except in `scripts/`, which run under tsx and use `dotenv`.
+  refuses to bundle it into the client.
+- **Env vars** are declared, with a zod schema, in `src/env.ts` (SvelteKit's explicit environment
+  variables) and imported from `$app/env/private`. They are validated at build and at boot, and
+  their types don't depend on the local `.env`. `$env/*` is disabled. `scripts/` run under tsx and
+  use `dotenv` + `process.env`.
 - **DB**: Drizzle + postgres.js. `drizzle/migrations/` was copied byte-for-byte from `../resume`,
   so applied-migration hashes match. Never edit an existing migration; generate a new one.
 - **Every admin action calls `requireAdmin`** (phase 5), even though `hooks.server.ts` guards

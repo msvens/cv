@@ -15,7 +15,13 @@ export default defineConfig({
 			},
 			// Full-stack app (SSR, form actions, +server.ts endpoints): a long-running Node
 			// server, unlike the static SPAs in chess/mphotos-svelte. Run with `node build`.
-			adapter: adapter()
+			adapter: adapter(),
+			experimental: {
+				// Env vars are declared in src/env.ts and imported from $app/env/private, so
+				// their types don't depend on the local .env or shell. Default in SvelteKit 3,
+				// which removes the $env/* modules this replaces.
+				explicitEnvironmentVariables: true
+			}
 		}),
 		// Renders Svelte components into jsdom for @testing-library/svelte tests
 		// (resolve.conditions tweak + auto-cleanup between tests). Test-only.

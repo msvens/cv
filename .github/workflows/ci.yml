@@ -36,3 +36,7 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          # The build validates the variables declared in src/env.ts. Nothing connects to
+          # the database, so a well-formed placeholder is enough.
+          DATABASE_URL: postgres://ci@localhost:5432/ci
