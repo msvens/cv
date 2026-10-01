@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+
+/* Faithful to the Next app: body text uses Tailwind's default system sans (Geist Sans was
+   loaded there but never applied); only the mono face is Geist. */
+@theme {
+	--font-mono: 'Geist Mono Variable', ui-monospace, monospace;
+	--color-accent: #16a34a;
+}
+
+@variant dark (.dark &);
+
+body {
+	@apply bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+}
+
+button {
+	cursor: pointer;
+}
+
+button:disabled {
+	cursor: default;
+}
+
+@media print {
+	.no-print {
+		display: none !important;
+	}
+	body {
+		@apply bg-white text-black;
+	}
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "section" ADD COLUMN "show_in_pdf" boolean DEFAULT true NOT NULL;

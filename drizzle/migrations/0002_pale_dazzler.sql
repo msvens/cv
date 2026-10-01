@@ -1,0 +1,1 @@
+ALTER TABLE "section" ADD COLUMN "visible" boolean DEFAULT true NOT NULL;
