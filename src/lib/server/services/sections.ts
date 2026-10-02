@@ -1,13 +1,13 @@
 import { and, asc, eq, inArray, type SQL } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { section, sectionItem } from '$lib/server/db/schema';
-import type { SectionItemData, SectionWithItems } from '$lib/types';
+import type { SectionData, SectionItemData, SectionWithItems } from '$lib/types';
 
 export async function listSections() {
 	return db.select().from(section).orderBy(asc(section.sortOrder));
 }
 
-export async function getSection(id: number) {
+export async function getSection(id: number): Promise<SectionData | null> {
 	const rows = await db.select().from(section).where(eq(section.id, id));
 	return rows[0] ?? null;
 }
@@ -20,7 +20,7 @@ export async function listItemsBySection(sectionId: number) {
 		.orderBy(asc(sectionItem.sortOrder));
 }
 
-export async function getSectionItem(id: number) {
+export async function getSectionItem(id: number): Promise<SectionItemData | null> {
 	const rows = await db.select().from(sectionItem).where(eq(sectionItem.id, id));
 	return rows[0] ?? null;
 }
