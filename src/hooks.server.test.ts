@@ -1,21 +1,20 @@
 import type { Handle } from '@sveltejs/kit';
 import { describe, expect, it } from 'vitest';
+import { fakeEvent } from '$lib/server/testing/fakeEvent';
 import { handle } from './hooks.server';
 
-type HandleInput = Parameters<Handle>[0];
-
 /**
- * Runs `handle` against a minimal fake request carrying `cookies` (name → value). `resolve`
- * renders a stub app.html through the hook's `transformPageChunk`, like SvelteKit does.
+ * Runs `handle` against a fake request carrying `cookies`. `resolve` renders a stub app.html
+ * through the hook's `transformPageChunk`, like SvelteKit does.
  */
 async function run(cookies: Record<string, string> = {}) {
-	const event = { cookies: { get: (name: string) => cookies[name] }, locals: {} };
-	const resolve: HandleInput['resolve'] = async (_event, opts) => {
+	const event = fakeEvent({ cookies });
+	const resolve: Parameters<Handle>[0]['resolve'] = async (_event, opts) => {
 		const html = await opts?.transformPageChunk?.({ html: '<html lang="%lang%">', done: true });
 		return new Response(html);
 	};
-	const response = await handle({ event, resolve } as unknown as HandleInput);
-	return { locals: event.locals as App.Locals, html: await response.text() };
+	const response = await handle({ event, resolve });
+	return { locals: event.locals, html: await response.text() };
 }
 
 describe('handle', () => {
