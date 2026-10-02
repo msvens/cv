@@ -10,6 +10,10 @@ export interface Translations {
 		darkMode: string;
 		lightMode: string;
 	};
+	footer: {
+		updated: string;
+		admin: string;
+	};
 	resume: {
 		present: string;
 	};
@@ -26,6 +30,10 @@ const translations: Record<Language, Translations> = {
 			darkMode: 'Dark mode',
 			lightMode: 'Light mode'
 		},
+		footer: {
+			updated: 'Updated',
+			admin: 'Admin'
+		},
 		resume: {
 			present: 'Present'
 		}
@@ -39,6 +47,10 @@ const translations: Record<Language, Translations> = {
 			menu: 'Meny',
 			darkMode: 'Mörkt läge',
 			lightMode: 'Ljust läge'
+		},
+		footer: {
+			updated: 'Uppdaterad',
+			admin: 'Admin'
 		},
 		resume: {
 			present: 'Nuvarande'
