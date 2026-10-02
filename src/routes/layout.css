@@ -7,7 +7,16 @@
 	--color-accent: #16a34a;
 }
 
-@variant dark (.dark &);
+/* Class-based dark mode, toggled by theme.svelte.ts (Tailwind v4's documented form). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Native UI (scrollbars, form controls) follows the theme too. */
+:root {
+	color-scheme: light;
+}
+:root.dark {
+	color-scheme: dark;
+}
 
 body {
 	@apply bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
