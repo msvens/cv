@@ -6,10 +6,13 @@
 	import TopBar from '$lib/components/layout/TopBar.svelte';
 	import { socialLinks } from '$lib/social';
 	import { initTheme, theme } from '$lib/stores/theme.svelte';
+	import { getTranslation } from '$lib/translations';
 
 	let { data, children } = $props();
 
 	const links = $derived(socialLinks(data.profile));
+	const meta = $derived(getTranslation(data.lang).meta);
+	const name = $derived(data.profile?.name ?? null);
 
 	// Effects run in creation order: adopt the stored theme first, so the sync below never
 	// clears the class the pre-paint script in app.html already set.
@@ -23,8 +26,10 @@
 </script>
 
 <svelte:head>
-	<title>Martin Svensson — Resume</title>
-	<meta name="description" content="Resume and portfolio of Martin Svensson" />
+	<title>{name ? `${name} — ${meta.resume}` : meta.resume}</title>
+	{#if name}
+		<meta name="description" content="{meta.descriptionOf} {name}" />
+	{/if}
 </svelte:head>
 
 <div class="flex min-h-screen flex-col font-sans">
@@ -32,10 +37,5 @@
 	<div class="flex-1">
 		{@render children()}
 	</div>
-	<Footer
-		lang={data.lang}
-		name={data.profile?.name ?? null}
-		{links}
-		updatedAt={data.profile?.updatedAt ?? null}
-	/>
+	<Footer lang={data.lang} {name} {links} updatedAt={data.profile?.updatedAt ?? null} />
 </div>

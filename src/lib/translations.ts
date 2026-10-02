@@ -3,7 +3,6 @@ import type { Language } from '$lib/i18n';
 export interface Translations {
 	topBar: {
 		downloadPdf: string;
-		available: string;
 		switchTo: string;
 		toggleTheme: string;
 		menu: string;
@@ -16,6 +15,14 @@ export interface Translations {
 	};
 	resume: {
 		present: string;
+		available: string;
+		empty: string;
+	};
+	meta: {
+		/** Page title suffix: "<name> — Resume". */
+		resume: string;
+		/** Meta description prefix: "Resume and portfolio of <name>". */
+		descriptionOf: string;
 	};
 }
 
@@ -23,7 +30,6 @@ const translations: Record<Language, Translations> = {
 	en: {
 		topBar: {
 			downloadPdf: 'PDF',
-			available: 'Available',
 			switchTo: 'Switch to',
 			toggleTheme: 'Toggle theme',
 			menu: 'Menu',
@@ -35,13 +41,18 @@ const translations: Record<Language, Translations> = {
 			admin: 'Admin'
 		},
 		resume: {
-			present: 'Present'
+			present: 'Present',
+			available: 'Available',
+			empty: 'No profile data found. Run pnpm db:seed to populate.'
+		},
+		meta: {
+			resume: 'Resume',
+			descriptionOf: 'Resume and portfolio of'
 		}
 	},
 	sv: {
 		topBar: {
 			downloadPdf: 'PDF',
-			available: 'Tillgänglig',
 			switchTo: 'Byt till',
 			toggleTheme: 'Växla tema',
 			menu: 'Meny',
@@ -53,7 +64,13 @@ const translations: Record<Language, Translations> = {
 			admin: 'Admin'
 		},
 		resume: {
-			present: 'Nuvarande'
+			present: 'Nuvarande',
+			available: 'Tillgänglig',
+			empty: 'Ingen profil hittades. Kör pnpm db:seed för att fylla på.'
+		},
+		meta: {
+			resume: 'CV',
+			descriptionOf: 'CV och portfolio för'
 		}
 	}
 };
