@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, type SQL } from 'drizzle-orm';
+import { asc, eq, inArray, type SQL } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { section, sectionItem } from '$lib/server/db/schema';
 import type { SectionData, SectionItemData, SectionWithItems } from '$lib/types';
@@ -59,5 +59,7 @@ export function listVisibleSectionsWithItems() {
 }
 
 export function listPdfSectionsWithItems() {
-	return sectionsWithItems(and(eq(section.showInPdf, true)));
+	// Only the "show in PDF" switch counts, independent of "visible": a section can be
+	// site-only or PDF-only.
+	return sectionsWithItems(eq(section.showInPdf, true));
 }

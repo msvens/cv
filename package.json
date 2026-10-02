@@ -28,6 +28,7 @@
 	"dependencies": {
 		"drizzle-orm": "^0.45.3",
 		"marked": "^18.0.14",
+		"pdfmake": "^0.3.11",
 		"postgres": "^3.4.9",
 		"zod": "^4.6.5"
 	},
@@ -42,6 +43,7 @@
 		"@testing-library/svelte": "^5.4.2",
 		"@testing-library/user-event": "^14.6.7",
 		"@types/node": "^24.19.0",
+		"@types/pdfmake": "^0.3.3",
 		"dotenv": "^18.0.4",
 		"drizzle-kit": "^0.31.11",
 		"eslint": "^10.11.0",
