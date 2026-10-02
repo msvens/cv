@@ -18,6 +18,9 @@ export interface Translations {
 		available: string;
 		empty: string;
 	};
+	pdf: {
+		profile: string;
+	};
 	meta: {
 		/** Page title suffix: "<name> — Resume". */
 		resume: string;
@@ -45,6 +48,9 @@ const translations: Record<Language, Translations> = {
 			available: 'Available',
 			empty: 'No profile data found. Run pnpm db:seed to populate.'
 		},
+		pdf: {
+			profile: 'Profile'
+		},
 		meta: {
 			resume: 'Resume',
 			descriptionOf: 'Resume and portfolio of'
@@ -67,6 +73,9 @@ const translations: Record<Language, Translations> = {
 			present: 'Nuvarande',
 			available: 'Tillgänglig',
 			empty: 'Ingen profil hittades. Kör pnpm db:seed för att fylla på.'
+		},
+		pdf: {
+			profile: 'Profil'
 		},
 		meta: {
 			resume: 'CV',
