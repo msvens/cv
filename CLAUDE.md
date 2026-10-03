@@ -43,11 +43,15 @@ and schema.
   language. All UI strings go through `$lib/translations.ts`. Bilingual _content_ is DB columns
   (`titleEn`/`titleSv`, …), picked by language.
 - **Styling**: Tailwind v4 via `@tailwindcss/vite`, stylesheet at `src/routes/layout.css`.
-  Class-based dark mode (`@variant dark (.dark &)`). Use no dynamic class strings; use explicit
-  class maps instead. Icons come from `svelte-hero-icons`.
+  Class-based dark mode (`@custom-variant dark (&:where(.dark, .dark *))`). Use no dynamic class
+  strings; use explicit class maps instead. Icons come from `svelte-hero-icons`.
 - **Tests**: `*.svelte.test.ts` run in jsdom (the `client` project); all other `*.test.ts` run in
   Node (the `server` project). Keep pure logic testable without rendering, e.g. the PDF document
-  definition is a pure function.
+  definition is a pure function. Test our logic, not the libraries.
+- **DB tests** run against PGlite (in-memory Postgres with the real migrations), never the dev
+  database. A test file opts in with one line:
+  `vi.mock('$lib/server/db/client', () => import('$lib/server/testing/testDb'));` Each file gets
+  its own fresh database; `resetDb()` empties it between tests. Don't mock Drizzle.
 - **Dependencies**: `adapter-node` bundles `devDependencies` into the build but leaves
   `dependencies` external, so anything imported at runtime by server code that should not be
   bundled (drizzle, postgres, pdfmake) goes in `dependencies` and is installed on the server.
