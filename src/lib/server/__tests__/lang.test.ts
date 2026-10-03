@@ -1,10 +1,10 @@
 import type { Handle } from '@sveltejs/kit';
 import { describe, expect, it } from 'vitest';
 import { fakeEvent } from '$lib/server/testing/fakeEvent';
-import { handle } from './hooks.server';
+import { langHandle } from '../lang';
 
 /**
- * Runs `handle` against a fake request carrying `cookies`. `resolve` renders a stub app.html
+ * Runs `langHandle` against a fake request carrying `cookies`. `resolve` renders a stub app.html
  * through the hook's `transformPageChunk`, like SvelteKit does.
  */
 async function run(cookies: Record<string, string> = {}) {
@@ -13,11 +13,11 @@ async function run(cookies: Record<string, string> = {}) {
 		const html = await opts?.transformPageChunk?.({ html: '<html lang="%lang%">', done: true });
 		return new Response(html);
 	};
-	const response = await handle({ event, resolve });
+	const response = await langHandle({ event, resolve });
 	return { locals: event.locals, html: await response.text() };
 }
 
-describe('handle', () => {
+describe('langHandle', () => {
 	it('uses the language from the lang cookie', async () => {
 		const { locals, html } = await run({ lang: 'sv' });
 		expect(locals.lang).toBe('sv');
