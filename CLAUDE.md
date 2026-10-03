@@ -37,8 +37,10 @@ and schema.
   use `dotenv` + `process.env`.
 - **DB**: Drizzle + postgres.js. `drizzle/migrations/` was copied byte-for-byte from `../resume`,
   so applied-migration hashes match. Never edit an existing migration; generate a new one.
-- **Every admin action calls `requireAdmin`** (phase 5), even though `hooks.server.ts` guards
-  `/admin`. Actions are POST endpoints and must not rely on page-level guards alone.
+- **Auth**: Better Auth, GitHub sign-in for one admin (`ADMIN_GITHUB_ID`). Rules live in
+  `$lib/server/auth/admin.ts`; `adminGuard` protects `/admin/**`, and **every admin action calls
+  `requireAdmin(event)` first**, because actions are POST endpoints and must not rely on the page
+  guard.
 - **Language** is the `lang` cookie (`en`|`sv`), resolved server-side, so SSR renders the right
   language. All UI strings go through `$lib/translations.ts`. Bilingual _content_ is DB columns
   (`titleEn`/`titleSv`, …), picked by language.

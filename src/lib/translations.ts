@@ -21,6 +21,15 @@ export interface Translations {
 	pdf: {
 		profile: string;
 	};
+	admin: {
+		title: string;
+		signInIntro: string;
+		signIn: string;
+		accessDenied: string;
+		signedInAs: string;
+		signOut: string;
+		comingSoon: string;
+	};
 	meta: {
 		/** Page title suffix: "<name> — Resume". */
 		resume: string;
@@ -51,6 +60,15 @@ const translations: Record<Language, Translations> = {
 		pdf: {
 			profile: 'Profile'
 		},
+		admin: {
+			title: 'Admin',
+			signInIntro: 'Sign in to manage your resume content.',
+			signIn: 'Sign in with GitHub',
+			accessDenied: 'Access denied — your account is not authorized.',
+			signedInAs: 'Signed in as',
+			signOut: 'Sign out',
+			comingSoon: 'The admin pages for editing the resume are coming next.'
+		},
 		meta: {
 			resume: 'Resume',
 			descriptionOf: 'Resume and portfolio of'
@@ -76,6 +94,15 @@ const translations: Record<Language, Translations> = {
 		},
 		pdf: {
 			profile: 'Profil'
+		},
+		admin: {
+			title: 'Admin',
+			signInIntro: 'Logga in för att hantera innehållet i ditt CV.',
+			signIn: 'Logga in med GitHub',
+			accessDenied: 'Åtkomst nekad — ditt konto har inte behörighet.',
+			signedInAs: 'Inloggad som',
+			signOut: 'Logga ut',
+			comingSoon: 'Adminsidorna för att redigera CV:t kommer härnäst.'
 		},
 		meta: {
 			resume: 'CV',
