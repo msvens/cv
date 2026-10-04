@@ -38,5 +38,10 @@ jobs:
         run: pnpm build
         env:
           # The build validates the variables declared in src/env.ts. Nothing connects to
-          # the database, so a well-formed placeholder is enough.
+          # the database or GitHub, so well-formed placeholders are enough.
           DATABASE_URL: postgres://ci@localhost:5432/ci
+          BETTER_AUTH_SECRET: ci-placeholder-secret-at-least-32-characters
+          BETTER_AUTH_URL: http://localhost:3004
+          GITHUB_CLIENT_ID: ci-placeholder
+          GITHUB_CLIENT_SECRET: ci-placeholder
+          ADMIN_GITHUB_ID: '1'
