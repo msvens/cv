@@ -54,7 +54,6 @@ describe('updateProfile', () => {
 		locationSv: 'Stockholm',
 		github: 'msvens',
 		linkedin: '',
-		photoUrl: '/profile.jpg',
 		available: false,
 		showGithub: false,
 		showLinkedin: true,

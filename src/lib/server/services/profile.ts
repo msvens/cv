@@ -37,7 +37,6 @@ export async function updateProfile(input: ProfileInput): Promise<boolean> {
 			phone: nullIfBlank(input.phone),
 			github: nullIfBlank(input.github),
 			linkedin: nullIfBlank(input.linkedin),
-			photoUrl: nullIfBlank(input.photoUrl),
 			updatedAt: new Date()
 		})
 		.where(eq(profile.id, existing.id));

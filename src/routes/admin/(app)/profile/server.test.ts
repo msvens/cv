@@ -33,7 +33,7 @@ const validForm = {
 	locationSv: 'Stockholm, Sverige',
 	github: 'msvens',
 	linkedin: 'msvens',
-	photoUrl: '/profile.jpg',
+	photoUrl: '/someone-elses.jpg', // not a profile-form field any more: must be ignored
 	available: 'on',
 	showLinkedin: 'on', // showGithub left unchecked
 	bioEn: 'Bio',
@@ -41,7 +41,7 @@ const validForm = {
 };
 
 const save = (form: Record<string, string>, user: typeof admin | null = admin) =>
-	actions.default(fakeEvent({ url: 'http://localhost/admin/profile', locals: { user }, form }));
+	actions.save(fakeEvent({ url: 'http://localhost/admin/profile', locals: { user }, form }));
 
 beforeEach(async () => {
 	await resetDb();
@@ -83,5 +83,11 @@ describe('profile form action', () => {
 			}
 		});
 		expect((await getProfile())?.email).toBe(profileSeed.email); // nothing saved
+	});
+
+	it('leaves the photo alone: it has its own actions', async () => {
+		await db.update(profile).set({ photoUrl: '/photo?v=abc123' });
+		expect(await save(validForm)).toEqual({ saved: true });
+		expect((await getProfile())?.photoUrl).toBe('/photo?v=abc123');
 	});
 });

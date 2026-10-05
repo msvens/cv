@@ -14,9 +14,13 @@ const githubUsername = z
 const linkedinUsername = z
 	.string()
 	.regex(/^[A-Za-z0-9-]{3,100}$/, 'A LinkedIn username only: the part after linkedin.com/in/');
-const photoUrl = z
+/**
+ * An image linked as-is: https only (an http image would be blocked on the https site), or a
+ * path on this site. Not `//host`, which is a protocol-relative URL to another site.
+ */
+export const photoUrlSchema = z
 	.string()
-	.regex(/^(\/|https?:\/\/)/i, 'A path such as /profile.jpg, or an http(s) URL');
+	.regex(/^(https:\/\/|\/(?!\/))/i, 'An https:// image URL, or a path such as /profile.jpg');
 
 export const profileSchema = z.object({
 	name: required,
@@ -28,7 +32,6 @@ export const profileSchema = z.object({
 	locationSv: required,
 	github: githubUsername.or(blank),
 	linkedin: linkedinUsername.or(blank),
-	photoUrl: photoUrl.or(blank),
 	available: z.boolean(),
 	showGithub: z.boolean(),
 	showLinkedin: z.boolean(),

@@ -37,6 +37,8 @@ describe('ResumeHeader', () => {
 		const photo = screen.getByRole('img', { name: 'Martin Svensson' });
 		expect(photo).toHaveAttribute('src', '/profile.jpg');
 		expect(photo).toHaveAttribute('width', '72');
+		// It may be linked from another site: don't tell that site where the visitor came from.
+		expect(photo).toHaveAttribute('referrerpolicy', 'no-referrer');
 	});
 
 	it('shows no photo without a photo URL', () => {

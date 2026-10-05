@@ -3,6 +3,7 @@
 	import BilingualField from '$lib/components/admin/BilingualField.svelte';
 	import CheckboxField from '$lib/components/admin/CheckboxField.svelte';
 	import FormMessage from '$lib/components/admin/FormMessage.svelte';
+	import PhotoForms from '$lib/components/admin/PhotoForms.svelte';
 	import SubmitButton from '$lib/components/admin/SubmitButton.svelte';
 	import TextField from '$lib/components/admin/TextField.svelte';
 
@@ -21,8 +22,16 @@
 {#if !p}
 	<FormMessage kind="error" text="There is no profile yet (run pnpm db:seed)." />
 {:else}
+	<PhotoForms
+		photoUrl={data.profile?.photoUrl ?? null}
+		message={form && 'photoMessage' in form ? form.photoMessage : undefined}
+		error={form && 'photoError' in form ? form.photoError : undefined}
+		urlValue={form && 'photoUrlValue' in form ? form.photoUrlValue : undefined}
+	/>
+
 	<form
 		method="POST"
+		action="?/save"
 		class="max-w-3xl space-y-6"
 		use:enhance={() => {
 			pending = true;
@@ -36,7 +45,7 @@
 			<FormMessage kind="success" text="Profile saved." />
 		{:else if form && 'errors' in form}
 			<FormMessage kind="error" text="Please fix the fields marked below." />
-		{:else if form && 'message' in form}
+		{:else if form && 'message' in form && form.message}
 			<FormMessage kind="error" text={form.message} />
 		{/if}
 
@@ -92,13 +101,6 @@
 			</div>
 		</div>
 
-		<TextField
-			label="Photo URL"
-			name="photoUrl"
-			value={p.photoUrl}
-			hint="A path such as /profile.jpg (an upload replaces this field soon)."
-			errors={errors.photoUrl}
-		/>
 		<CheckboxField label="Available for opportunities" name="available" checked={p.available} />
 
 		<BilingualField
