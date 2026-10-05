@@ -1,4 +1,5 @@
 import {
+	customType,
 	pgTable,
 	serial,
 	text,
@@ -62,3 +63,19 @@ export const sectionItem = pgTable(
 	},
 	(t) => [index('section_item_section_idx').on(t.sectionId, t.sortOrder)]
 );
+
+/** Binary data (Postgres bytea). Drizzle 0.45 has no built-in type; this is its documented way. */
+const bytea = customType<{ data: Uint8Array }>({
+	dataType: () => 'bytea'
+});
+
+/**
+ * The uploaded profile photo, already processed (a 256×256 JPEG). One row at most. Kept out of
+ * `profile` so loading the profile — on every page view — never reads image bytes.
+ */
+export const profilePhoto = pgTable('profile_photo', {
+	id: serial('id').primaryKey(),
+	data: bytea('data').notNull(),
+	contentType: text('content_type').notNull(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});

@@ -17,6 +17,7 @@
 			<img
 				src={header.photoUrl}
 				alt={header.name}
+				referrerpolicy="no-referrer"
 				width="72"
 				height="72"
 				class="shrink-0 rounded-full object-cover md:h-24 md:w-24"

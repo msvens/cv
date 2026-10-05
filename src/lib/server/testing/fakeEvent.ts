@@ -19,7 +19,7 @@ export function fakeEvent<E extends RequestEvent = RequestEvent>({
 	cookies?: Record<string, string>;
 	locals?: Partial<App.Locals>;
 	params?: Record<string, string>;
-	form?: Record<string, string>;
+	form?: Record<string, string | File>;
 } = {}): E {
 	const body = new FormData();
 	for (const [name, value] of Object.entries(form ?? {})) body.set(name, value);
