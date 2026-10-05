@@ -29,6 +29,13 @@
       "when": 1791099262942,
       "tag": "0003_charming_redwing",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791191738932,
+      "tag": "0004_bumpy_annihilus",
+      "breakpoints": true
     }
   ]
 }

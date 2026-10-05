@@ -19,7 +19,7 @@ describe('migrations', () => {
 			sql`select table_name, column_name from information_schema.columns where table_schema = 'public'`
 		);
 		const tables = new Set(columns.rows.map((c) => c.table_name));
-		expect([...tables].sort()).toEqual(['profile', 'section', 'section_item']);
+		expect([...tables].sort()).toEqual(['profile', 'profile_photo', 'section', 'section_item']);
 		const sectionColumns = columns.rows
 			.filter((c) => c.table_name === 'section')
 			.map((c) => c.column_name);
@@ -30,5 +30,12 @@ describe('migrations', () => {
 			.map((c) => c.column_name);
 		// 0003: the link show/hide switches.
 		expect(profileColumns).toEqual(expect.arrayContaining(['show_github', 'show_linkedin']));
+	});
+
+	it('stores the uploaded photo as binary (0004)', async () => {
+		const type = await db.execute<{ data_type: string }>(
+			sql`select data_type from information_schema.columns where table_name = 'profile_photo' and column_name = 'data'`
+		);
+		expect(type.rows[0].data_type).toBe('bytea');
 	});
 });

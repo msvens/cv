@@ -22,5 +22,7 @@ await migrate(db, { migrationsFolder: 'drizzle/migrations' });
 
 /** Empty every table (ids restart at 1), for a clean slate between tests in one file. */
 export async function resetDb(): Promise<void> {
-	await db.execute(sql`TRUNCATE section_item, section, profile RESTART IDENTITY CASCADE`);
+	await db.execute(
+		sql`TRUNCATE section_item, section, profile, profile_photo RESTART IDENTITY CASCADE`
+	);
 }
