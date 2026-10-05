@@ -39,29 +39,39 @@ export const profileSchema = z.object({
 export const sectionSchema = z.object({
 	slug: z
 		.string()
-		.min(1)
-		.regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
-	labelEn: z.string().min(1),
-	labelSv: z.string().min(1),
+		.regex(/^[a-z0-9-]+$/, 'Lowercase letters, digits and hyphens only, e.g. "work-history"'),
+	labelEn: required,
+	labelSv: required,
 	displayType: z.enum(['entries', 'chips']),
 	visible: z.boolean(),
-	showInPdf: z.boolean(),
-	sortOrder: z.number().int()
+	showInPdf: z.boolean()
+	// No sortOrder: the order is managed on the server (new rows last, moved with up/down).
 });
 
-export const sectionItemSchema = z.object({
-	sectionId: z.number().int(),
-	titleEn: z.string().min(1),
-	titleSv: z.string().min(1),
-	subtitleEn: z.string().optional().or(z.literal('')),
-	subtitleSv: z.string().optional().or(z.literal('')),
-	startDate: z.string().optional().or(z.literal('')),
-	endDate: z.string().optional().or(z.literal('')),
-	link: z.string().optional().or(z.literal('')),
-	descriptionEn: z.string().optional().or(z.literal('')),
-	descriptionSv: z.string().optional().or(z.literal('')),
-	sortOrder: z.number().int()
-});
+// What <input type="date"> sends; blank means "no date".
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'A date as YYYY-MM-DD');
+
+export const sectionItemSchema = z
+	.object({
+		titleEn: required,
+		titleSv: required,
+		subtitleEn: z.string(),
+		subtitleSv: z.string(),
+		startDate: isoDate.or(blank),
+		endDate: isoDate.or(blank),
+		// Same rule as safeHref: only links that are safe to render (#16).
+		link: z
+			.string()
+			.regex(/^(https?:|mailto:)/i, 'An http(s) or mailto: link')
+			.or(blank),
+		descriptionEn: z.string(),
+		descriptionSv: z.string()
+	})
+	// ISO dates compare correctly as strings.
+	.refine((item) => !item.startDate || !item.endDate || item.endDate >= item.startDate, {
+		message: 'The end date is before the start date',
+		path: ['endDate']
+	});
 
 export type ProfileInput = z.infer<typeof profileSchema>;
 export type SectionInput = z.infer<typeof sectionSchema>;
