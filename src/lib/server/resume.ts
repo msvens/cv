@@ -2,7 +2,7 @@ import { formatDateRange } from '$lib/dates';
 import type { Language } from '$lib/i18n';
 import { safeHref } from '$lib/markdown';
 import type { EntryView, ResumeView, SectionView } from '$lib/resume';
-import { parseMarkdown } from '$lib/server/markdown';
+import { parseMarkdown } from '$lib/markdownParse';
 import type { ProfileData, SectionItemData, SectionWithItems } from '$lib/types';
 
 /** Optional text: blank becomes null, so components only need one "absent" check. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { profileSeed } from '$lib/server/db/seed-data';
-import { parseMarkdown } from '../markdown';
+import { parseMarkdown } from '../markdownParse';
 
 const text = (t: string) => ({ kind: 'text', text: t });
 
@@ -109,8 +109,12 @@ describe('parseMarkdown', () => {
 		]);
 	});
 
-	it('renders a heading as a plain paragraph', () => {
-		expect(parseMarkdown('# Title')).toEqual([{ kind: 'paragraph', children: [text('Title')] }]);
+	it('keeps headings, capping the level at 3', () => {
+		expect(parseMarkdown('# One\n\n## Two\n\n#### Four')).toEqual([
+			{ kind: 'heading', level: 1, children: [text('One')] },
+			{ kind: 'heading', level: 2, children: [text('Two')] },
+			{ kind: 'heading', level: 3, children: [text('Four')] }
+		]);
 	});
 
 	it('leaves a bare URL as text (CommonMark, as the old app)', () => {

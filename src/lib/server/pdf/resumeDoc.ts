@@ -191,6 +191,14 @@ function mdBlock(block: MdBlock, gapAfter: number): Content {
 			return { text: mdInlines(block.children), margin: [0, 0, 0, gapAfter] };
 		case 'plain':
 			return { text: mdInlines(block.children) };
+		case 'heading':
+			// Subheadings within the body text: bold, a step larger for # and ##.
+			return {
+				text: mdInlines(block.children),
+				bold: true,
+				fontSize: block.level === 3 ? undefined : 10 + (3 - block.level),
+				margin: [0, 4, 0, 2]
+			};
 		case 'list': {
 			const items = block.items.map((item) =>
 				item.length === 1 ? mdBlock(item[0], 0) : { stack: item.map((b) => mdBlock(b, 0)) }
