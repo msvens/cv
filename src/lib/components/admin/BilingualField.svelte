@@ -10,7 +10,8 @@
 		markdown = false,
 		rows = 4,
 		errorsEn,
-		errorsSv
+		errorsSv,
+		idPrefix
 	}: {
 		label: string;
 		nameEn: string;
@@ -21,7 +22,11 @@
 		rows?: number;
 		errorsEn?: string[];
 		errorsSv?: string[];
+		/** Keeps element ids unique when several forms with the same fields share a page. */
+		idPrefix?: string;
 	} = $props();
+
+	const idOf = (name: string) => (idPrefix ? `${idPrefix}-${name}` : name);
 
 	const fields = $derived([
 		{ name: nameEn, value: valueEn ?? '', lang: 'EN', errors: errorsEn },
@@ -35,11 +40,19 @@
 		{#each fields as field (field.name)}
 			<div>
 				{#if markdown}
-					<MarkdownEditor name={field.name} value={field.value} {rows} label={field.lang} />
+					<MarkdownEditor
+						name={field.name}
+						id={idOf(field.name)}
+						value={field.value}
+						{rows}
+						label={field.lang}
+					/>
 				{:else}
-					<label for={field.name} class="mb-1 block text-xs text-neutral-500">{field.lang}</label>
+					<label for={idOf(field.name)} class="mb-1 block text-xs text-neutral-500"
+						>{field.lang}</label
+					>
 					<input
-						id={field.name}
+						id={idOf(field.name)}
 						name={field.name}
 						value={field.value}
 						aria-invalid={field.errors ? true : undefined}
