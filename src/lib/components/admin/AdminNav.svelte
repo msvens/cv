@@ -2,8 +2,10 @@
 	import { ChevronDown, Icon } from 'svelte-hero-icons';
 	import { page } from '$app/state';
 
-	// Sections arrives with step 6.2.
-	const items = [{ href: '/admin/profile', label: 'Profile' }];
+	const items = [
+		{ href: '/admin/profile', label: 'Profile' },
+		{ href: '/admin/sections', label: 'Sections' }
+	];
 
 	const isActive = (href: string) =>
 		page.url.pathname === href || page.url.pathname.startsWith(`${href}/`);

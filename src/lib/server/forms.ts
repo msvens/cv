@@ -21,9 +21,20 @@ export type FieldErrors = Partial<Record<string, string[]>>;
 
 /**
  * A 400 for a form that failed validation: the submitted values go back so nothing typed is
- * lost, with a message per field (the old admin only said "Validation failed").
+ * lost, with a message per field (the old admin only said "Validation failed"). `target` tells
+ * a page with several forms which one to reopen.
  */
-export function invalid<V extends Record<string, unknown>>(values: V, error: z.ZodError) {
+export function invalid<V extends Record<string, unknown>>(
+	values: V,
+	error: z.ZodError,
+	target?: string
+) {
 	const errors: FieldErrors = z.flattenError(error).fieldErrors;
-	return fail(400, { values, errors });
+	return fail(400, { values, errors, target });
+}
+
+/** A positive integer field (e.g. a hidden row id), or null when missing or malformed. */
+export function positiveInt(form: FormData, name: string): number | null {
+	const n = Number(text(form, name));
+	return Number.isInteger(n) && n > 0 ? n : null;
 }
