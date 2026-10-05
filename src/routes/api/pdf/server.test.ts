@@ -23,6 +23,8 @@ const profile: ProfileData = {
 	linkedin: null,
 	photoUrl: null,
 	available: true,
+	showGithub: true,
+	showLinkedin: true,
 	bioEn: 'Bio with åäö — and **bold**.',
 	bioSv: 'Bio på svenska.',
 	updatedAt: new Date('2026-04-22T07:51:59Z')
