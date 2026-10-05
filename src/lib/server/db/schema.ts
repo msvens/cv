@@ -22,6 +22,10 @@ export const profile = pgTable('profile', {
 	linkedin: text('linkedin'),
 	photoUrl: text('photo_url'),
 	available: boolean('available').notNull().default(true),
+	// Show the GitHub/LinkedIn link? Separate from the username so a link can be hidden without
+	// blanking it (and so an empty github can always be re-filled from the admin's login).
+	showGithub: boolean('show_github').notNull().default(true),
+	showLinkedin: boolean('show_linkedin').notNull().default(true),
 	bioEn: text('bio_en').notNull(),
 	bioSv: text('bio_sv').notNull(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()

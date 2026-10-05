@@ -147,6 +147,20 @@ describe('buildResumeDoc', () => {
 		expect(nodes(list)).toContainEqual(expect.objectContaining({ bold: true, text: ['Led'] }));
 	});
 
+	it('renders markdown headings as bold lines', () => {
+		const withHeading: ResumeView = {
+			...view,
+			header: {
+				...view.header,
+				bio: [{ kind: 'heading', level: 1, children: [{ kind: 'text', text: 'Focus' }] }]
+			}
+		};
+		const heading = nodes(content('en', [github], withHeading)[1]).find(
+			(n) => Array.isArray(n.text) && text(n) === 'Focus'
+		);
+		expect(heading).toMatchObject({ bold: true });
+	});
+
 	it('renders chips as shaded runs', () => {
 		const chips = nodes(content()[3]).filter((n) => n.background === '#f3f3f3');
 		expect(chips.map((c) => String(c.text).trim())).toEqual(['Go', 'Rust']);

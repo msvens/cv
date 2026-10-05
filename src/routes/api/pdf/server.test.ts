@@ -23,12 +23,14 @@ const profile: ProfileData = {
 	linkedin: null,
 	photoUrl: null,
 	available: true,
+	showGithub: true,
+	showLinkedin: true,
 	bioEn: 'Bio with åäö — and **bold**.',
 	bioSv: 'Bio på svenska.',
 	updatedAt: new Date('2026-04-22T07:51:59Z')
 };
 
-const get = (url: string) => GET(fakeEvent({ url }) as Parameters<typeof GET>[0]);
+const get = (url: string) => GET(fakeEvent({ url }));
 
 beforeEach(() => {
 	vi.mocked(getProfile).mockResolvedValue(profile);

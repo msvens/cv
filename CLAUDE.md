@@ -28,7 +28,9 @@ and schema.
 - **Svelte 5 runes only.** Runes mode is forced in `vite.config.ts`.
 - **SSR is on.** Data is loaded in `+page.server.ts` / `+layout.server.ts`. Mutations are form
   actions progressively enhanced with `use:enhance`. Loads re-run after an enhanced submit, so no
-  manual cache invalidation is needed. Don't use remote functions (still experimental).
+  manual cache invalidation is needed. Don't use remote functions (still experimental). Actions
+  read fields with `$lib/server/forms.ts` and, on invalid input, return `invalid(values, error)`
+  (400 with per-field errors and the submitted values).
 - **Server-only code lives in `$lib/server/`** (db client, schema, services, pdf, auth). SvelteKit
   refuses to bundle it into the client.
 - **Env vars** are declared, with a zod schema, in `src/env.ts` (SvelteKit's explicit environment
@@ -42,8 +44,9 @@ and schema.
   `requireAdmin(event)` first**, because actions are POST endpoints and must not rely on the page
   guard.
 - **Language** is the `lang` cookie (`en`|`sv`), resolved server-side, so SSR renders the right
-  language. All UI strings go through `$lib/translations.ts`. Bilingual _content_ is DB columns
-  (`titleEn`/`titleSv`, …), picked by language.
+  language. All UI strings go through `$lib/translations.ts` — **except the admin pages
+  (`/admin/**` behind sign-in), which are English-only** (one user). Bilingual _content_ is DB
+  columns (`titleEn`/`titleSv`, …), picked by language.
 - **Styling**: Tailwind v4 via `@tailwindcss/vite`, stylesheet at `src/routes/layout.css`.
   Class-based dark mode (`@custom-variant dark (&:where(.dark, .dark *))`). Use no dynamic class
   strings; use explicit class maps instead. Icons come from `svelte-hero-icons`.

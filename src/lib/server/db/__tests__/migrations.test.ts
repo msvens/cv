@@ -25,5 +25,10 @@ describe('migrations', () => {
 			.map((c) => c.column_name);
 		// Added by the later migrations (0001, 0002).
 		expect(sectionColumns).toEqual(expect.arrayContaining(['show_in_pdf', 'visible']));
+		const profileColumns = columns.rows
+			.filter((c) => c.table_name === 'profile')
+			.map((c) => c.column_name);
+		// 0003: the link show/hide switches.
+		expect(profileColumns).toEqual(expect.arrayContaining(['show_github', 'show_linkedin']));
 	});
 });

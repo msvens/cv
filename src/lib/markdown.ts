@@ -1,6 +1,6 @@
 /**
  * Markdown as a small tree of allowed elements. The server parses admin-written markdown into
- * this tree (`$lib/server/markdown.ts`) and `Markdown.svelte` renders it element by element, so
+ * this tree (`$lib/markdownParse.ts`) and `Markdown.svelte` renders it element by element, so
  * text is always escaped by Svelte and no HTML string is ever inserted.
  */
 export type MdInline =
@@ -13,6 +13,8 @@ export type MdInline =
 
 export type MdBlock =
 	| { kind: 'paragraph'; children: MdInline[] }
+	/** Markdown `#`–`###` (deeper levels count as 3). Rendered as subheadings, see Markdown.svelte. */
+	| { kind: 'heading'; level: 1 | 2 | 3; children: MdInline[] }
 	/** A tight list item's content: inline, without a wrapping <p>. */
 	| { kind: 'plain'; children: MdInline[] }
 	| { kind: 'list'; ordered: boolean; items: MdBlock[][] };

@@ -1,19 +1,39 @@
 import { z } from 'zod/v4';
 
+// Form values arrive trimmed (see $lib/server/forms.ts); an empty optional field is ''.
+const required = z.string().min(1, 'Required');
+const blank = z.literal('');
+
+// Both stored as usernames, never URLs: $lib/social.ts builds the links (#11).
+const githubUsername = z
+	.string()
+	.regex(
+		/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/,
+		'A GitHub username only (letters, digits, hyphens), not a URL'
+	);
+const linkedinUsername = z
+	.string()
+	.regex(/^[A-Za-z0-9-]{3,100}$/, 'A LinkedIn username only: the part after linkedin.com/in/');
+const photoUrl = z
+	.string()
+	.regex(/^(\/|https?:\/\/)/i, 'A path such as /profile.jpg, or an http(s) URL');
+
 export const profileSchema = z.object({
-	name: z.string().min(1),
-	titleEn: z.string().min(1),
-	titleSv: z.string().min(1),
-	email: z.email(),
-	phone: z.string().optional().or(z.literal('')),
-	locationEn: z.string().min(1),
-	locationSv: z.string().min(1),
-	github: z.string().optional().or(z.literal('')),
-	linkedin: z.string().optional().or(z.literal('')),
-	photoUrl: z.string().optional().or(z.literal('')),
+	name: required,
+	titleEn: required,
+	titleSv: required,
+	email: z.email('Not a valid email address'),
+	phone: z.string(),
+	locationEn: required,
+	locationSv: required,
+	github: githubUsername.or(blank),
+	linkedin: linkedinUsername.or(blank),
+	photoUrl: photoUrl.or(blank),
 	available: z.boolean(),
-	bioEn: z.string().min(1),
-	bioSv: z.string().min(1)
+	showGithub: z.boolean(),
+	showLinkedin: z.boolean(),
+	bioEn: required,
+	bioSv: required
 });
 
 export const sectionSchema = z.object({

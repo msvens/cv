@@ -15,6 +15,8 @@ const profile: ProfileData = {
 	linkedin: null,
 	photoUrl: '/profile.jpg',
 	available: true,
+	showGithub: true,
+	showLinkedin: true,
 	bioEn: 'First.\n\nSecond.',
 	bioSv: 'Första.',
 	updatedAt: new Date('2026-04-22T07:51:59Z')

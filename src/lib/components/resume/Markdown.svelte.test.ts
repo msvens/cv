@@ -68,4 +68,22 @@ describe('Markdown', () => {
 		expect(container.querySelector('img')).toBeNull();
 		expect(container.querySelector('p')?.textContent).toContain('<script>alert(1)</script>');
 	});
+
+	it('renders markdown headings as subheadings below the page sections (h3–h5)', () => {
+		const { container } = render(Markdown, {
+			props: {
+				blocks: [
+					{ kind: 'heading', level: 1, children: [text('One')] },
+					{ kind: 'heading', level: 2, children: [text('Two')] },
+					{ kind: 'heading', level: 3, children: [text('Three')] }
+				]
+			}
+		});
+		expect([...container.querySelectorAll('h3, h4, h5')].map((h) => h.tagName)).toEqual([
+			'H3',
+			'H4',
+			'H5'
+		]);
+		expect(container.querySelector('h1, h2')).toBeNull();
+	});
 });
