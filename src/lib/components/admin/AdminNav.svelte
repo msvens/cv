@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 
 	const items = [
+		{ href: '/admin/applications', label: 'Applications' },
 		{ href: '/admin/profile', label: 'Profile' },
 		{ href: '/admin/sections', label: 'Sections' }
 	];

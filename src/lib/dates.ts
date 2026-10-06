@@ -34,3 +34,35 @@ export function formatMonthYear(date: Date, lang: Language): string {
 		timeZone: OWNER_TIMEZONE
 	});
 }
+
+/** Today's date on the owner's calendar as 'YYYY-MM-DD' (the server itself may run on UTC). */
+export function ownerToday(now: Date = new Date()): string {
+	const parts = new Intl.DateTimeFormat('en', {
+		timeZone: OWNER_TIMEZONE,
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit'
+	}).formatToParts(now);
+	const part = (type: string) => parts.find((p) => p.type === type)?.value;
+	return `${part('year')}-${part('month')}-${part('day')}`;
+}
+
+/** "6 Oct 2026" for the English-only admin: a timestamp on the owner's calendar. */
+export function formatDay(date: Date): string {
+	return date.toLocaleDateString('en-GB', {
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric',
+		timeZone: OWNER_TIMEZONE
+	});
+}
+
+/** "6 Oct 2026" for a 'YYYY-MM-DD' date column: formatted in UTC so the day can't shift. */
+export function formatIsoDay(iso: string): string {
+	return new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', {
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric',
+		timeZone: 'UTC'
+	});
+}

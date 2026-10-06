@@ -1,4 +1,5 @@
 import { z } from 'zod/v4';
+import { STATUSES } from '$lib/applications';
 
 // Form values arrive trimmed (see $lib/server/forms.ts); an empty optional field is ''.
 const required = z.string().min(1, 'Required');
@@ -76,6 +77,27 @@ export const sectionItemSchema = z
 		path: ['endDate']
 	});
 
+export const applicationSchema = z.object({
+	company: required,
+	role: required,
+	adUrl: z
+		.string()
+		.regex(/^https?:\/\//i, 'An http(s) link to the ad')
+		.or(blank),
+	location: z.string(),
+	deadline: isoDate.or(blank),
+	appliedOn: isoDate.or(blank),
+	notes: z.string(),
+	adText: z.string()
+});
+
+/** Only the two fields the list page's "New application" form asks for. */
+export const newApplicationSchema = applicationSchema.pick({ company: true, role: true });
+
+export const statusSchema = z.enum(STATUSES);
+
 export type ProfileInput = z.infer<typeof profileSchema>;
 export type SectionInput = z.infer<typeof sectionSchema>;
 export type SectionItemInput = z.infer<typeof sectionItemSchema>;
+export type ApplicationInput = z.infer<typeof applicationSchema>;
+export type NewApplicationInput = z.infer<typeof newApplicationSchema>;
