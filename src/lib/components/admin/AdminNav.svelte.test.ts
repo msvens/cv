@@ -14,6 +14,14 @@ describe('AdminNav', () => {
 		}
 	});
 
+	it('lists Applications first', () => {
+		render(AdminNav);
+		const [first] = screen.getAllByRole('link');
+		expect(first).toHaveAccessibleName('Applications');
+		expect(first).toHaveAttribute('href', '/admin/applications');
+		expect(first).not.toHaveAttribute('aria-current');
+	});
+
 	it('signs out with a POST to /admin/signout', () => {
 		render(AdminNav);
 		const form = screen.getAllByRole('button', { name: 'Sign out' })[0].closest('form');

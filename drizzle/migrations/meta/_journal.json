@@ -36,6 +36,13 @@
       "when": 1791191738932,
       "tag": "0004_bumpy_annihilus",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791284500067,
+      "tag": "0005_secret_grandmaster",
+      "breakpoints": true
     }
   ]
 }

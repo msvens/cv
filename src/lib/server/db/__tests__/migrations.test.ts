@@ -19,7 +19,14 @@ describe('migrations', () => {
 			sql`select table_name, column_name from information_schema.columns where table_schema = 'public'`
 		);
 		const tables = new Set(columns.rows.map((c) => c.table_name));
-		expect([...tables].sort()).toEqual(['profile', 'profile_photo', 'section', 'section_item']);
+		expect([...tables].sort()).toEqual([
+			'application',
+			'application_status_change',
+			'profile',
+			'profile_photo',
+			'section',
+			'section_item'
+		]);
 		const sectionColumns = columns.rows
 			.filter((c) => c.table_name === 'section')
 			.map((c) => c.column_name);
@@ -30,6 +37,13 @@ describe('migrations', () => {
 			.map((c) => c.column_name);
 		// 0003: the link show/hide switches.
 		expect(profileColumns).toEqual(expect.arrayContaining(['show_github', 'show_linkedin']));
+	});
+
+	it('deletes an application with its timeline (0005)', async () => {
+		const rule = await db.execute<{ delete_rule: string }>(
+			sql`select delete_rule from information_schema.referential_constraints where constraint_name = 'application_status_change_application_id_application_id_fk'`
+		);
+		expect(rule.rows[0].delete_rule).toBe('CASCADE');
 	});
 
 	it('stores the uploaded photo as binary (0004)', async () => {

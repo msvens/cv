@@ -79,3 +79,37 @@ export const profilePhoto = pgTable('profile_photo', {
 	contentType: text('content_type').notNull(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+/**
+ * A job application (admin-only). `status` is plain text checked in code ($lib/applications),
+ * so adding a status needs no migration. Never bumps `profile.updatedAt`: that date is the
+ * public footer's "Updated" and must not reveal job-search activity.
+ */
+export const application = pgTable('application', {
+	id: serial('id').primaryKey(),
+	company: text('company').notNull(),
+	role: text('role').notNull(),
+	status: text('status').notNull().default('not_applied'),
+	adUrl: text('ad_url'),
+	adText: text('ad_text'),
+	location: text('location'),
+	deadline: date('deadline', { mode: 'string' }),
+	appliedOn: date('applied_on', { mode: 'string' }),
+	notes: text('notes'),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+/** One row per status an application has had, the first on creation: its timeline. */
+export const applicationStatusChange = pgTable(
+	'application_status_change',
+	{
+		id: serial('id').primaryKey(),
+		applicationId: integer('application_id')
+			.notNull()
+			.references(() => application.id, { onDelete: 'cascade' }),
+		status: text('status').notNull(),
+		changedAt: timestamp('changed_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [index('application_status_change_application_idx').on(t.applicationId)]
+);

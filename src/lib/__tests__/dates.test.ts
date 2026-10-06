@@ -1,5 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
-import { formatDateRange, formatMonthYear, OWNER_TIMEZONE } from '../dates';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import {
+	formatDateRange,
+	formatDay,
+	formatIsoDay,
+	formatMonthYear,
+	ownerToday,
+	OWNER_TIMEZONE
+} from '../dates';
 
 describe('formatDateRange', () => {
 	it('returns null when there are no dates', () => {
@@ -56,5 +63,38 @@ describe('formatMonthYear', () => {
 		});
 		expect(inUtc).toBe('Apr 2026');
 		expect(formatMonthYear(boundary, 'en')).toBe('May 2026');
+	});
+});
+
+describe('ownerToday', () => {
+	// Tests run with TZ=Europe/Stockholm; production may run on UTC. Run these on UTC so an
+	// unpinned date would fail.
+	const tz = process.env.TZ;
+	beforeAll(() => {
+		process.env.TZ = 'UTC';
+	});
+	afterAll(() => {
+		process.env.TZ = tz;
+	});
+
+	it("is already tomorrow in Sweden when it's late evening in UTC", () => {
+		// Summer (UTC+2) and winter (UTC+1).
+		expect(ownerToday(new Date('2026-10-05T22:30:00Z'))).toBe('2026-10-06');
+		expect(ownerToday(new Date('2026-12-31T23:30:00Z'))).toBe('2027-01-01');
+	});
+
+	it('is still today just before midnight in Sweden', () => {
+		expect(ownerToday(new Date('2026-10-05T21:59:00Z'))).toBe('2026-10-05');
+		expect(ownerToday(new Date('2026-12-31T22:59:00Z'))).toBe('2026-12-31');
+	});
+});
+
+describe('formatDay / formatIsoDay', () => {
+	it('formats a timestamp on the owner calendar', () => {
+		expect(formatDay(new Date('2026-10-05T22:30:00Z'))).toBe('6 Oct 2026');
+	});
+
+	it('formats a date column without shifting the day', () => {
+		expect(formatIsoDay('2026-01-01')).toBe('1 Jan 2026');
 	});
 });
