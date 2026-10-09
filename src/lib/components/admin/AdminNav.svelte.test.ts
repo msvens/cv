@@ -22,6 +22,22 @@ describe('AdminNav', () => {
 		expect(first).not.toHaveAttribute('aria-current');
 	});
 
+	it('shows how many applications need attention, and nothing when none do', () => {
+		const { unmount } = render(AdminNav, { attentionCount: 2 });
+		expect(screen.getAllByLabelText('2 need attention').length).toBeGreaterThan(0);
+		unmount();
+		render(AdminNav, { attentionCount: 0 });
+		expect(screen.queryByLabelText(/need attention/)).toBeNull();
+	});
+
+	it('links to the settings', () => {
+		render(AdminNav);
+		expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+			'href',
+			'/admin/settings'
+		);
+	});
+
 	it('signs out with a POST to /admin/signout', () => {
 		render(AdminNav);
 		const form = screen.getAllByRole('button', { name: 'Sign out' })[0].closest('form');

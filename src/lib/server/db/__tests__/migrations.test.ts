@@ -25,7 +25,8 @@ describe('migrations', () => {
 			'profile',
 			'profile_photo',
 			'section',
-			'section_item'
+			'section_item',
+			'settings'
 		]);
 		const sectionColumns = columns.rows
 			.filter((c) => c.table_name === 'section')
@@ -44,6 +45,13 @@ describe('migrations', () => {
 			sql`select delete_rule from information_schema.referential_constraints where constraint_name = 'application_status_change_application_id_application_id_fk'`
 		);
 		expect(rule.rows[0].delete_rule).toBe('CASCADE');
+	});
+
+	it('keeps settings to one row (0006)', async () => {
+		const checks = await db.execute<{ constraint_name: string }>(
+			sql`select constraint_name from information_schema.check_constraints where constraint_name = 'settings_single_row'`
+		);
+		expect(checks.rows).toHaveLength(1);
 	});
 
 	it('stores the uploaded photo as binary (0004)', async () => {
