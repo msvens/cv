@@ -55,3 +55,48 @@ export function groupApplications<A extends Sortable>(list: A[]): { active: A[];
 		.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 	return { active, closed };
 }
+
+export type Attention = 'overdue' | 'soon';
+
+/** Whole days from one 'YYYY-MM-DD' to another, on the calendar (no timezone or DST shift). */
+function daysBetween(from: string, to: string): number {
+	const utc = (iso: string) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
+	return Math.round((utc(to) - utc(from)) / 86_400_000);
+}
+
+/**
+ * Does the application need attention? Only one not yet applied for, with a deadline: past it
+ * is `overdue`; from `windowDays` days before it up to the day itself it is `soon`.
+ */
+export function attention(
+	app: { status: string; deadline: string | null },
+	today: string,
+	windowDays: number
+): { kind: Attention; days: number } | null {
+	if (app.status !== 'not_applied' || !app.deadline) return null;
+	const days = daysBetween(today, app.deadline);
+	if (days < 0) return { kind: 'overdue', days };
+	if (days <= windowDays) return { kind: 'soon', days };
+	return null;
+}
+
+/** The applications needing attention, most urgent first (the most overdue, then soonest). */
+export function needsAttention<A extends { status: string; deadline: string | null }>(
+	list: A[],
+	today: string,
+	windowDays: number
+): { application: A; kind: Attention; days: number }[] {
+	return list
+		.flatMap((application) => {
+			const a = attention(application, today, windowDays);
+			return a ? [{ application, ...a }] : [];
+		})
+		.sort((a, b) => a.days - b.days);
+}
+
+/** "Overdue by 2 days", "Deadline today", "Deadline in 3 days". */
+export function attentionLabel({ kind, days }: { kind: Attention; days: number }): string {
+	const plural = (n: number) => (n === 1 ? '1 day' : `${n} days`);
+	if (kind === 'overdue') return `Overdue by ${plural(-days)}`;
+	return days === 0 ? 'Deadline today' : `Deadline in ${plural(days)}`;
+}

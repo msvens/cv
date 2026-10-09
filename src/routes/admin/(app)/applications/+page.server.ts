@@ -1,12 +1,20 @@
 import { redirect } from '@sveltejs/kit';
-import { groupApplications } from '$lib/applications';
+import { groupApplications, needsAttention } from '$lib/applications';
+import { ownerToday } from '$lib/dates';
 import { requireAdmin } from '$lib/server/auth/admin';
 import { invalid, text } from '$lib/server/forms';
 import { createApplication, listApplications } from '$lib/server/services/applications';
+import { getSettings } from '$lib/server/services/settings';
 import { newApplicationSchema } from '$lib/validation/schemas';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => groupApplications(await listApplications());
+export const load: PageServerLoad = async () => {
+	const [applications, { attentionDays }] = await Promise.all([listApplications(), getSettings()]);
+	return {
+		...groupApplications(applications),
+		attention: needsAttention(applications, ownerToday(), attentionDays)
+	};
+};
 
 export const actions: Actions = {
 	create: async (event) => {

@@ -1,4 +1,6 @@
+import { sql } from 'drizzle-orm';
 import {
+	check,
 	customType,
 	pgTable,
 	serial,
@@ -112,4 +114,19 @@ export const applicationStatusChange = pgTable(
 		changedAt: timestamp('changed_at', { withTimezone: true }).notNull().defaultNow()
 	},
 	(t) => [index('application_status_change_application_idx').on(t.applicationId)]
+);
+
+/**
+ * Site settings: one row (the CHECK makes that a database rule), one typed column per setting,
+ * each with a default. Reads fall back to the defaults while the row doesn't exist; a new
+ * setting is a new column. Defaults mirror SETTINGS_DEFAULTS ($lib/settings), tested.
+ */
+export const settings = pgTable(
+	'settings',
+	{
+		id: integer('id').primaryKey().default(1),
+		/** Days before a deadline that an unapplied application needs attention. */
+		attentionDays: integer('attention_days').notNull().default(7)
+	},
+	(t) => [check('settings_single_row', sql`${t.id} = 1`)]
 );

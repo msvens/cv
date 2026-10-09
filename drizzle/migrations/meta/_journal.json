@@ -43,6 +43,13 @@
       "when": 1791284500067,
       "tag": "0005_secret_grandmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791538219811,
+      "tag": "0006_next_silver_fox",
+      "breakpoints": true
     }
   ]
 }
