@@ -2,10 +2,13 @@
 	import { ChevronDown, Icon } from 'svelte-hero-icons';
 	import { page } from '$app/state';
 
+	let { attentionCount = 0 }: { attentionCount?: number } = $props();
+
 	const items = [
 		{ href: '/admin/applications', label: 'Applications' },
 		{ href: '/admin/profile', label: 'Profile' },
-		{ href: '/admin/sections', label: 'Sections' }
+		{ href: '/admin/sections', label: 'Sections' },
+		{ href: '/admin/settings', label: 'Settings' }
 	];
 
 	const isActive = (href: string) =>
@@ -19,6 +22,8 @@
 		'block rounded px-3 py-2 text-sm transition-colors text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800/50 dark:hover:text-neutral-100';
 	const activeLink =
 		'block rounded px-3 py-2 text-sm font-medium bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
+	const pill =
+		'ml-2 inline-block rounded-full bg-red-600 px-1.5 text-xs leading-5 font-medium text-white';
 	const signOutButton =
 		'block w-full px-3 py-2 text-left text-sm text-neutral-500 transition-colors hover:text-neutral-900 dark:hover:text-neutral-100';
 </script>
@@ -38,9 +43,17 @@
 			href={item.href}
 			class={isActive(item.href) ? activeLink : link}
 			aria-current={isActive(item.href) ? 'page' : undefined}
-			{onclick}>{item.label}</a
+			{onclick}
+			>{item.label}{#if item.href === '/admin/applications'}{@render badge()}{/if}</a
 		>
 	{/each}
+{/snippet}
+
+<!-- How many applications need attention (deadlines); nothing when none do. -->
+{#snippet badge()}
+	{#if attentionCount > 0}
+		<span class={pill} aria-label="{attentionCount} need attention">{attentionCount}</span>
+	{/if}
 {/snippet}
 
 {#snippet signOut()}
@@ -70,7 +83,9 @@
 			aria-controls="admin-menu"
 			onclick={() => (menuOpen = !menuOpen)}
 		>
-			<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">{current}</span>
+			<span class="text-sm font-medium text-neutral-700 dark:text-neutral-300"
+				>{current}{@render badge()}</span
+			>
 			<!-- A plain string: the icon component predates Svelte 5's class arrays. -->
 			<Icon
 				src={ChevronDown}

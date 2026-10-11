@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { statusLabel } from '$lib/applications';
+	import { attentionLabel, statusLabel } from '$lib/applications';
 	import FormMessage from '$lib/components/admin/FormMessage.svelte';
 	import SubmitButton from '$lib/components/admin/SubmitButton.svelte';
 	import TextField from '$lib/components/admin/TextField.svelte';
@@ -18,6 +18,11 @@
 	let pending = $state(false);
 
 	const empty = $derived(data.active.length === 0 && data.closed.length === 0);
+	const attentionById = $derived(new Map(data.attention.map((a) => [a.application.id, a])));
+	const tag = {
+		overdue: 'text-red-600 dark:text-red-400',
+		soon: 'text-amber-700 dark:text-amber-400'
+	};
 	const heading = 'mb-2 text-sm font-medium text-neutral-500 uppercase';
 </script>
 
@@ -26,6 +31,7 @@
 {#snippet list(applications: ApplicationData[])}
 	<ul class="space-y-2">
 		{#each applications as a (a.id)}
+			{@const due = attentionById.get(a.id)}
 			<li class="rounded border border-neutral-200 p-4 dark:border-neutral-800">
 				<a
 					href="/admin/applications/{a.id}"
@@ -33,7 +39,8 @@
 					>{a.company} · {a.role}</a
 				>
 				<div class="mt-1 text-xs text-neutral-500">
-					{statusLabel(a.status)}{a.deadline
+					{#if due}<span class="{tag[due.kind]} font-medium">{attentionLabel(due)}</span> ·
+					{/if}{statusLabel(a.status)}{a.deadline
 						? ` · deadline ${formatIsoDay(a.deadline)}`
 						: ''}{a.appliedOn ? ` · applied ${formatIsoDay(a.appliedOn)}` : ''}
 				</div>
@@ -47,6 +54,27 @@
 		<p class="text-sm text-neutral-500">
 			No applications yet. Add the first one with “New application” below.
 		</p>
+	{/if}
+
+	{#if data.attention.length}
+		<section
+			aria-labelledby="attention-heading"
+			class="rounded border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30"
+		>
+			<h2 id="attention-heading" class="mb-2 font-medium text-neutral-900 dark:text-neutral-100">
+				Needs attention
+			</h2>
+			<ul class="space-y-1 text-sm">
+				{#each data.attention as due (due.application.id)}
+					<li>
+						<a href="/admin/applications/{due.application.id}" class="hover:underline"
+							>{due.application.company} · {due.application.role}</a
+						>
+						— <span class="{tag[due.kind]} font-medium">{attentionLabel(due)}</span>
+					</li>
+				{/each}
+			</ul>
+		</section>
 	{/if}
 
 	{#if data.active.length}
