@@ -8,10 +8,9 @@
 	// as-is, or remove it. One photo at a time — each replaces the other.
 	let {
 		photoUrl,
-		message,
 		error,
 		urlValue
-	}: { photoUrl: string | null; message?: string; error?: string; urlValue?: string } = $props();
+	}: { photoUrl: string | null; error?: string; urlValue?: string } = $props();
 
 	/** Same limit as the server (MAX_UPLOAD_BYTES); checked here too so nothing big is sent. */
 	const MAX_BYTES = 10 * 1024 * 1024;
@@ -61,8 +60,7 @@
 	aria-labelledby="photo-heading"
 >
 	<h2 id="photo-heading" class="font-medium text-neutral-900 dark:text-neutral-100">Photo</h2>
-	{#if message}<FormMessage kind="success" text={message} />{/if}
-	{#if error}<FormMessage kind="error" text={error} />{/if}
+	{#if error}<FormMessage text={error} />{/if}
 
 	<div class="flex items-center gap-4">
 		{#if photoUrl}
@@ -114,7 +112,7 @@
 			]}>{uploading ? `Uploading ${uploading}…` : 'Choose image…'}</label
 		>
 		{#if tooLarge}
-			<FormMessage kind="error" text="{tooLarge} is larger than 10 MB. Choose a smaller image." />
+			<FormMessage text="{tooLarge} is larger than 10 MB. Choose a smaller image." />
 		{/if}
 		<p class={hint}>
 			Any image up to 10 MB; choosing one replaces the current photo. It is scaled to 256×256 and

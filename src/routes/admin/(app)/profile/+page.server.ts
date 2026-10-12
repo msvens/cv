@@ -8,8 +8,9 @@ import { photoUrlSchema, profileSchema } from '$lib/validation/schemas';
 import type { Actions } from './$types';
 
 // The profile itself comes from the root layout's load (data.profile). The photo has its own
-// actions (named, so the profile form's is `save` rather than `default`); their results use
-// photoMessage / photoError so they never mix with the profile form's values and errors.
+// actions (named, so the profile form's is `save` rather than `default`). Success returns
+// { message } (shown as a toast); photo failures use photoError / photoUrlValue so they never mix
+// with the profile form's values and errors.
 const photoProblem = (photoError: string, photoUrlValue?: string) =>
 	fail(400, { photoError, photoUrlValue });
 
@@ -36,9 +37,9 @@ export const actions: Actions = {
 		const parsed = profileSchema.safeParse(values);
 		if (!parsed.success) return invalid(values, parsed.error);
 		if (!(await updateProfile(parsed.data))) {
-			return fail(404, { values, message: 'There is no profile to update (run pnpm db:seed).' });
+			return fail(404, { values, error: 'There is no profile to update (run pnpm db:seed).' });
 		}
-		return { saved: true };
+		return { message: 'Profile saved.' };
 	},
 
 	uploadPhoto: async (event) => {
@@ -51,7 +52,7 @@ export const actions: Actions = {
 		if (photo === 'not-an-image')
 			return photoProblem('That file is not an image that can be read.');
 		await savePhoto(photo);
-		return { photoMessage: 'Photo uploaded.' };
+		return { message: 'Photo uploaded.' };
 	},
 
 	setPhotoUrl: async (event) => {
@@ -60,12 +61,12 @@ export const actions: Actions = {
 		const parsed = photoUrlSchema.safeParse(url);
 		if (!parsed.success) return photoProblem(parsed.error.issues[0].message, url);
 		await setPhotoUrl(parsed.data);
-		return { photoMessage: 'Photo URL saved.' };
+		return { message: 'Photo URL saved.' };
 	},
 
 	removePhoto: async (event) => {
 		requireAdmin(event);
 		await removePhoto();
-		return { photoMessage: 'Photo removed.' };
+		return { message: 'Photo removed.' };
 	}
 };

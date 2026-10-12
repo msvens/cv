@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import FormMessage from '$lib/components/admin/FormMessage.svelte';
+	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import SubmitButton from '$lib/components/admin/SubmitButton.svelte';
 	import TextField from '$lib/components/admin/TextField.svelte';
 
@@ -18,9 +19,12 @@
 	let pending = $state(false);
 </script>
 
-<h1 class="mb-6 text-2xl font-light text-neutral-900 dark:text-neutral-100">Settings</h1>
+<PageHeader title="Settings">
+	{#snippet actions()}<SubmitButton form="settings" {pending} />{/snippet}
+</PageHeader>
 
 <form
+	id="settings"
 	method="POST"
 	action="?/save"
 	class="max-w-xl space-y-6"
@@ -32,10 +36,8 @@
 		};
 	}}
 >
-	{#if form && 'message' in form && form.message}
-		<FormMessage kind="success" text={form.message} />
-	{:else if form && 'errors' in form}
-		<FormMessage kind="error" text="Please fix the fields marked below." />
+	{#if form && 'errors' in form}
+		<FormMessage text="Please fix the fields marked below." />
 	{/if}
 
 	<TextField
@@ -46,6 +48,4 @@
 		hint="Applications not yet applied for show up this many days before their deadline."
 		errors={errors.attentionDays}
 	/>
-
-	<SubmitButton {pending} />
 </form>

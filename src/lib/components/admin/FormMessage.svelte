@@ -1,10 +1,6 @@
 <script lang="ts">
-	let { kind, text }: { kind: 'success' | 'error'; text: string } = $props();
+	// Errors stay next to the form they belong to; success messages are toasts (Toast.svelte).
+	let { text }: { text: string } = $props();
 </script>
 
-<p
-	role={kind === 'error' ? 'alert' : 'status'}
-	class={['text-sm', kind === 'error' ? 'text-red-500' : 'text-green-600']}
->
-	{text}
-</p>
+<p role="alert" class="text-sm text-red-500">{text}</p>

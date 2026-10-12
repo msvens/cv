@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AdminNav from '$lib/components/admin/AdminNav.svelte';
+	import Toast from '$lib/components/admin/Toast.svelte';
 
 	let { data, children } = $props();
 </script>
@@ -12,3 +13,5 @@
 	<AdminNav attentionCount={data.attentionCount} />
 	<div class="min-w-0 flex-1 py-6 md:py-6">{@render children()}</div>
 </div>
+
+<Toast />

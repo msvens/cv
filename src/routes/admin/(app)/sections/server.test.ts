@@ -1,4 +1,4 @@
-import { isHttpError, type RequestEvent } from '@sveltejs/kit';
+import { isHttpError, isRedirect, type RequestEvent } from '@sveltejs/kit';
 import { asc } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { profileSeed } from '$lib/server/db/seed-data';
@@ -46,6 +46,17 @@ const newSection = {
 };
 const newItem = { titleEn: 'Svelte Summit', titleSv: 'Svelte Summit', startDate: '2026-05-01' };
 
+/** The redirect an action throws, as its status and location. */
+async function redirectOf(run: () => unknown) {
+	try {
+		await run();
+	} catch (e) {
+		if (isRedirect(e)) return { status: e.status, location: e.location };
+		throw e;
+	}
+	throw new Error('expected a redirect');
+}
+
 let sectionId: number;
 let itemId: number;
 beforeEach(async () => {
@@ -71,6 +82,7 @@ describe('section actions', () => {
 			() => listActions.move(event({ id: String(sectionId), direction: 'up' }, { as: user('999') }))
 		],
 		['update', () => detailActions.update(event(newSection, { id: sectionId, as: user('999') }))],
+		['delete (detail)', () => detailActions.delete(event({}, { id: sectionId, as: user('999') }))],
 		[
 			'createItem',
 			() => detailActions.createItem(event(newItem, { id: sectionId, as: user('999') }))
@@ -143,6 +155,19 @@ describe('section detail', () => {
 			status: 400,
 			data: { target: String(itemId), errors: { link: [expect.any(String)] } }
 		});
+	});
+
+	it('deletes the section with its items and goes back to the list', async () => {
+		expect(await redirectOf(() => detailActions.delete(event({}, { id: sectionId })))).toEqual({
+			status: 303,
+			location: '/admin/sections'
+		});
+		expect(await db.select().from(section)).toHaveLength(0);
+		expect(await db.select().from(sectionItem)).toHaveLength(0);
+	});
+
+	it('reports a deleted section that is already gone', async () => {
+		expect(await detailActions.delete(event({}, { id: 999 }))).toMatchObject({ status: 404 });
 	});
 
 	it('marks a failed section edit for the section form', async () => {

@@ -1,10 +1,11 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { requireAdmin } from '$lib/server/auth/admin';
 import { invalid, positiveInt } from '$lib/server/forms';
 import { direction, itemValues, sectionValues, slugTaken } from '$lib/server/sectionForms';
 import {
 	createItem,
 	deleteItem,
+	deleteSection,
 	getSection,
 	listItemsBySection,
 	moveItem,
@@ -42,6 +43,12 @@ export const actions: Actions = {
 		if (result === 'slug-taken') return slugTaken(values, 'section');
 		if (result === 'not-found') return gone('section');
 		return { message: 'Section saved.' };
+	},
+
+	delete: async (event) => {
+		requireAdmin(event);
+		if ((await deleteSection(sectionId(event.params.id))) === 'not-found') return gone('section');
+		redirect(303, '/admin/sections');
 	},
 
 	createItem: async (event) => {

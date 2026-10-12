@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { attentionLabel, statusLabel } from '$lib/applications';
 	import FormMessage from '$lib/components/admin/FormMessage.svelte';
+	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import SubmitButton from '$lib/components/admin/SubmitButton.svelte';
 	import TextField from '$lib/components/admin/TextField.svelte';
 	import { formatIsoDay } from '$lib/dates';
@@ -26,7 +27,7 @@
 	const heading = 'mb-2 text-sm font-medium text-neutral-500 uppercase';
 </script>
 
-<h1 class="mb-6 text-2xl font-light text-neutral-900 dark:text-neutral-100">Applications</h1>
+<PageHeader title="Applications" />
 
 {#snippet list(applications: ApplicationData[])}
 	<ul class="space-y-2">
@@ -99,7 +100,7 @@
 		>
 			<h2 class="font-medium text-neutral-900 dark:text-neutral-100">New application</h2>
 			{#if failed}
-				<FormMessage kind="error" text="Please fix the fields marked below." />
+				<FormMessage text="Please fix the fields marked below." />
 			{/if}
 			<TextField
 				label="Company"
