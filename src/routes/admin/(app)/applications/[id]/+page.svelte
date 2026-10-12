@@ -3,6 +3,7 @@
 	import { STATUSES, STATUS_LABELS, statusLabel } from '$lib/applications';
 	import DeleteButton from '$lib/components/admin/DeleteButton.svelte';
 	import FormMessage from '$lib/components/admin/FormMessage.svelte';
+	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import MarkdownEditor from '$lib/components/admin/MarkdownEditor.svelte';
 	import SubmitButton from '$lib/components/admin/SubmitButton.svelte';
 	import TextField from '$lib/components/admin/TextField.svelte';
@@ -29,18 +30,24 @@
 	const label = 'mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300';
 </script>
 
-<a href="/admin/applications" class="text-sm text-neutral-500 hover:text-neutral-700"
-	>← Applications</a
+<PageHeader
+	title="{a.company} · {a.role}"
+	back={{ href: '/admin/applications', label: 'Applications' }}
 >
-<h1 class="mt-2 mb-6 text-2xl font-light text-neutral-900 dark:text-neutral-100">
-	{a.company} · {a.role}
-</h1>
+	{#snippet actions()}
+		<SubmitButton form="details" pending={saving} />
+		<span class="h-6 w-px bg-neutral-200 dark:bg-neutral-800" aria-hidden="true"></span>
+		<DeleteButton
+			action="?/delete"
+			label="Delete application"
+			confirmText="Delete “{a.company} · {a.role}” and its timeline?"
+		/>
+	{/snippet}
+</PageHeader>
 
 <div class="space-y-8">
-	{#if form && 'message' in form && form.message}
-		<FormMessage kind="success" text={form.message} />
-	{:else if form && 'error' in form && form.error}
-		<FormMessage kind="error" text={form.error} />
+	{#if form && 'error' in form && form.error}
+		<FormMessage text={form.error} />
 	{/if}
 
 	<section class={box} aria-labelledby="status-heading">
@@ -73,6 +80,7 @@
 	</section>
 
 	<form
+		id="details"
 		method="POST"
 		action="?/update"
 		class={box}
@@ -86,7 +94,7 @@
 	>
 		<h2 class={heading}>Details</h2>
 		{#if form && 'errors' in form}
-			<FormMessage kind="error" text="Please fix the fields marked below." />
+			<FormMessage text="Please fix the fields marked below." />
 		{/if}
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<TextField
@@ -137,15 +145,5 @@
 				placeholder="Paste the ad's text, so it's kept after the ad is taken down."
 				value={v.adText ?? ''}></textarea>
 		</div>
-		<SubmitButton pending={saving} />
 	</form>
-
-	<section class="max-w-3xl">
-		<DeleteButton
-			action="?/delete"
-			id={a.id}
-			label="Delete application"
-			confirmText="Delete “{a.company} · {a.role}” and its timeline?"
-		/>
-	</section>
 </div>

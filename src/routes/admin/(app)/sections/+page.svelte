@@ -4,6 +4,7 @@
 	import BilingualField from '$lib/components/admin/BilingualField.svelte';
 	import DeleteButton from '$lib/components/admin/DeleteButton.svelte';
 	import FormMessage from '$lib/components/admin/FormMessage.svelte';
+	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import ReorderButtons from '$lib/components/admin/ReorderButtons.svelte';
 	import SubmitButton from '$lib/components/admin/SubmitButton.svelte';
 	import TextField from '$lib/components/admin/TextField.svelte';
@@ -23,13 +24,11 @@
 		'w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100';
 </script>
 
-<h1 class="mb-6 text-2xl font-light text-neutral-900 dark:text-neutral-100">Sections</h1>
+<PageHeader title="Sections" />
 
 <div class="space-y-4">
-	{#if form && 'message' in form && form.message}
-		<FormMessage kind="success" text={form.message} />
-	{:else if form && 'error' in form && form.error}
-		<FormMessage kind="error" text={form.error} />
+	{#if form && 'error' in form && form.error}
+		<FormMessage text={form.error} />
 	{/if}
 
 	<ul class="space-y-2">
@@ -82,7 +81,7 @@
 		>
 			<h2 class="font-medium text-neutral-900 dark:text-neutral-100">New section</h2>
 			{#if failed}
-				<FormMessage kind="error" text="Please fix the fields marked below." />
+				<FormMessage text="Please fix the fields marked below." />
 			{/if}
 			<TextField
 				label="Slug"

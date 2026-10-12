@@ -6,6 +6,7 @@
 	import DeleteButton from '$lib/components/admin/DeleteButton.svelte';
 	import FormMessage from '$lib/components/admin/FormMessage.svelte';
 	import ItemFields from '$lib/components/admin/ItemFields.svelte';
+	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import ReorderButtons from '$lib/components/admin/ReorderButtons.svelte';
 	import SubmitButton from '$lib/components/admin/SubmitButton.svelte';
 	import TextField from '$lib/components/admin/TextField.svelte';
@@ -45,6 +46,11 @@
 	const failedSection = $derived(failedValues && 'slug' in failedValues ? failedValues : null);
 	const failedItem = $derived(failedValues && 'titleEn' in failedValues ? failedValues : null);
 	const sectionValues = $derived(target === 'section' && failedSection ? failedSection : section);
+	const sectionFormOpen = $derived(editingSection || target === 'section');
+	const details = $derived(
+		`${section.slug} · ${section.displayType}${!section.visible ? ' · hidden' : ''}${!section.showInPdf ? ' · not in PDF' : ''}`
+	);
+	const itemsText = (n: number) => (n === 1 ? '1 item' : `${n} items`);
 	const select =
 		'w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100';
 	const quiet = 'text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100';
@@ -52,15 +58,30 @@
 </script>
 
 <div class="space-y-8">
-	<a href="/admin/sections" class={quiet}>&larr; Sections</a>
+	<PageHeader
+		title={section.labelEn}
+		subtitle={sectionFormOpen ? undefined : details}
+		back={{ href: '/admin/sections', label: 'Sections' }}
+	>
+		{#snippet actions()}
+			{#if !sectionFormOpen}
+				<button class={quiet} onclick={() => (editingSection = true)}>Edit section</button>
+			{/if}
+			<DeleteButton
+				action="?/delete"
+				label="Delete section"
+				confirmText={data.items.length > 0
+					? `Delete “${section.labelEn}” and its ${itemsText(data.items.length)}?`
+					: `Delete “${section.labelEn}”?`}
+			/>
+		{/snippet}
+	</PageHeader>
 
-	{#if form && 'message' in form && form.message}
-		<FormMessage kind="success" text={form.message} />
-	{:else if form && 'error' in form && form.error}
-		<FormMessage kind="error" text={form.error} />
+	{#if form && 'error' in form && form.error}
+		<FormMessage text={form.error} />
 	{/if}
 
-	{#if editingSection || target === 'section'}
+	{#if sectionFormOpen}
 		<form method="POST" action="?/update" class={box} use:enhance={closeOnSuccess}>
 			<h2 class="font-medium text-neutral-900 dark:text-neutral-100">Edit section</h2>
 			<TextField
@@ -104,20 +125,6 @@
 				<button type="button" class={quiet} onclick={() => (editingSection = false)}>Cancel</button>
 			</div>
 		</form>
-	{:else}
-		<div class="flex items-baseline justify-between gap-4">
-			<div>
-				<h1 class="text-2xl font-light text-neutral-900 dark:text-neutral-100">
-					{section.labelEn}
-				</h1>
-				<p class="mt-1 text-sm text-neutral-500">
-					{section.slug} · {section.displayType}{!section.visible
-						? ' · hidden'
-						: ''}{!section.showInPdf ? ' · not in PDF' : ''}
-				</p>
-			</div>
-			<button class={quiet} onclick={() => (editingSection = true)}>Edit section</button>
-		</div>
 	{/if}
 
 	<section class="space-y-4">

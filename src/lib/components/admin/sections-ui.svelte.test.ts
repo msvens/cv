@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, within } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import DeleteButton from './DeleteButton.svelte';
 import ItemFields from './ItemFields.svelte';
 import ReorderButtons from './ReorderButtons.svelte';
@@ -11,26 +11,47 @@ vi.mock('$app/forms', () => ({ enhance: () => ({ destroy() {} }) }));
 describe('DeleteButton', () => {
 	const props = { action: '?/delete', id: 7, confirmText: 'Delete “Experience” and its 8 items?' };
 
-	it('submits nothing until confirmed, and says what goes with it (#21)', async () => {
-		const user = userEvent.setup();
-		const { container } = render(DeleteButton, { props });
-		expect(container.querySelector('form')).toBeNull();
-
-		await user.click(screen.getByRole('button', { name: 'Delete' }));
-		expect(screen.getByText('Delete “Experience” and its 8 items?')).toBeInTheDocument();
-		const form = container.querySelector('form')!;
-		expect(form).toHaveAttribute('action', '?/delete');
-		expect(form.querySelector('input[name="id"]')).toHaveValue('7');
-		expect(screen.getByRole('button', { name: 'Confirm' }).closest('form')).toBe(form);
+	// jsdom has no modal dialogs: open/close just toggle the `open` attribute here.
+	beforeAll(() => {
+		HTMLDialogElement.prototype.showModal = function () {
+			this.open = true;
+		};
+		HTMLDialogElement.prototype.close = function () {
+			this.open = false;
+		};
 	});
 
-	it('goes back on Cancel', async () => {
+	it('submits nothing until confirmed in the dialog, and says what goes with it (#21)', async () => {
+		const user = userEvent.setup();
+		const { container } = render(DeleteButton, { props });
+		const dialog = container.querySelector('dialog')!;
+		expect(dialog.open).toBe(false);
+
+		await user.click(screen.getByRole('button', { name: 'Delete' }));
+		expect(dialog.open).toBe(true);
+		expect(screen.getByRole('dialog', { name: 'Delete?' })).toHaveTextContent(props.confirmText);
+		const form = dialog.querySelector('form')!;
+		expect(form).toHaveAttribute('action', '?/delete');
+		expect(form.querySelector('input[name="id"]')).toHaveValue('7');
+		const confirm = within(dialog).getByRole('button', { name: 'Delete' });
+		expect(confirm).toHaveProperty('type', 'submit');
+		expect(confirm.closest('form')).toBe(form);
+	});
+
+	it('closes on Cancel', async () => {
 		const user = userEvent.setup();
 		const { container } = render(DeleteButton, { props });
 		await user.click(screen.getByRole('button', { name: 'Delete' }));
 		await user.click(screen.getByRole('button', { name: 'Cancel' }));
-		expect(container.querySelector('form')).toBeNull();
-		expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+		expect(container.querySelector('dialog')!.open).toBe(false);
+	});
+
+	it('names the trigger by its label and leaves out the id on a detail page', () => {
+		const { container } = render(DeleteButton, {
+			props: { action: '?/delete', confirmText: 'Delete it?', label: 'Delete application' }
+		});
+		expect(screen.getByRole('button', { name: 'Delete application' })).toBeInTheDocument();
+		expect(container.querySelector('input[name="id"]')).toBeNull();
 	});
 });
 

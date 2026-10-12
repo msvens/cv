@@ -3,6 +3,7 @@
 	import BilingualField from '$lib/components/admin/BilingualField.svelte';
 	import CheckboxField from '$lib/components/admin/CheckboxField.svelte';
 	import FormMessage from '$lib/components/admin/FormMessage.svelte';
+	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import PhotoForms from '$lib/components/admin/PhotoForms.svelte';
 	import SubmitButton from '$lib/components/admin/SubmitButton.svelte';
 	import TextField from '$lib/components/admin/TextField.svelte';
@@ -17,19 +18,23 @@
 	let pending = $state(false);
 </script>
 
-<h1 class="mb-6 text-2xl font-light text-neutral-900 dark:text-neutral-100">Profile</h1>
+<PageHeader title="Profile">
+	{#snippet actions()}
+		{#if p}<SubmitButton form="profile" {pending} />{/if}
+	{/snippet}
+</PageHeader>
 
 {#if !p}
-	<FormMessage kind="error" text="There is no profile yet (run pnpm db:seed)." />
+	<FormMessage text="There is no profile yet (run pnpm db:seed)." />
 {:else}
 	<PhotoForms
 		photoUrl={data.profile?.photoUrl ?? null}
-		message={form && 'photoMessage' in form ? form.photoMessage : undefined}
 		error={form && 'photoError' in form ? form.photoError : undefined}
 		urlValue={form && 'photoUrlValue' in form ? form.photoUrlValue : undefined}
 	/>
 
 	<form
+		id="profile"
 		method="POST"
 		action="?/save"
 		class="max-w-3xl space-y-6"
@@ -41,12 +46,10 @@
 			};
 		}}
 	>
-		{#if form && 'saved' in form}
-			<FormMessage kind="success" text="Profile saved." />
-		{:else if form && 'errors' in form}
-			<FormMessage kind="error" text="Please fix the fields marked below." />
-		{:else if form && 'message' in form && form.message}
-			<FormMessage kind="error" text={form.message} />
+		{#if form && 'errors' in form}
+			<FormMessage text="Please fix the fields marked below." />
+		{:else if form && 'error' in form && form.error}
+			<FormMessage text={form.error} />
 		{/if}
 
 		<TextField label="Name" name="name" value={p.name} required errors={errors.name} />
@@ -114,7 +117,5 @@
 			errorsEn={errors.bioEn}
 			errorsSv={errors.bioSv}
 		/>
-
-		<SubmitButton {pending} />
 	</form>
 {/if}

@@ -50,7 +50,7 @@ beforeEach(async () => {
 
 describe('profile form action', () => {
 	it('saves a valid form, including unchecked boxes as false', async () => {
-		expect(await save(validForm)).toEqual({ saved: true });
+		expect(await save(validForm)).toEqual({ message: 'Profile saved.' });
 		expect(await getProfile()).toMatchObject({
 			linkedin: 'msvens',
 			phone: null,
@@ -87,7 +87,7 @@ describe('profile form action', () => {
 
 	it('leaves the photo alone: it has its own actions', async () => {
 		await db.update(profile).set({ photoUrl: '/photo?v=abc123' });
-		expect(await save(validForm)).toEqual({ saved: true });
+		expect(await save(validForm)).toEqual({ message: 'Profile saved.' });
 		expect((await getProfile())?.photoUrl).toBe('/photo?v=abc123');
 	});
 });

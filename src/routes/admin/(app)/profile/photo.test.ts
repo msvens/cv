@@ -58,7 +58,7 @@ describe('photo actions', () => {
 
 	it('uploads: stores a 256×256 version and points the profile at it', async () => {
 		expect(await actions.uploadPhoto(post({ photo: await photoFile() }))).toEqual({
-			photoMessage: 'Photo uploaded.'
+			message: 'Photo uploaded.'
 		});
 		expect((await getProfile())?.photoUrl).toMatch(/^\/photo\?v=/);
 		const meta = await sharp((await getPhoto())!.data).metadata();
@@ -79,7 +79,7 @@ describe('photo actions', () => {
 	it('links an https image URL as-is', async () => {
 		const url = 'https://www.mellowtech.org/api/thumbs/2c2b5f00.jpg';
 		expect(await actions.setPhotoUrl(post({ photoUrl: url }))).toEqual({
-			photoMessage: 'Photo URL saved.'
+			message: 'Photo URL saved.'
 		});
 		expect((await getProfile())?.photoUrl).toBe(url);
 	});
