@@ -1,5 +1,7 @@
 import { isHttpError, isRedirect, type RequestEvent } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ownerToday } from '$lib/dates';
 import { application, applicationStatusChange } from '$lib/server/db/schema';
 import { fakeEvent } from '$lib/server/testing/fakeEvent';
 import { db, resetDb } from '$lib/server/testing/testDb';
@@ -162,8 +164,15 @@ describe('application pages', () => {
 		const data = await detailLoad(fakeEvent({ params: { id: String(id) } }));
 		expect(data).toMatchObject({
 			application: { company: 'Klarna' },
-			timeline: [{ status: 'not_applied' }]
+			timeline: [{ status: 'not_applied' }],
+			attention: null
 		});
+	});
+
+	it('says when the deadline needs attention, by the same rule as the list', async () => {
+		await db.update(application).set({ deadline: ownerToday() }).where(eq(application.id, id));
+		const data = await detailLoad(fakeEvent({ params: { id: String(id) } }));
+		expect(data).toMatchObject({ attention: { kind: 'soon', days: 0 } });
 	});
 
 	it('opens the admin on the applications', async () => {

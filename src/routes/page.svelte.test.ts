@@ -36,8 +36,8 @@ const resume: ResumeView = {
 };
 
 function renderPage(data: Pick<PageData, 'lang' | 'resume'>) {
-	// The page only reads `lang` and `resume`; the layout's profile isn't used here.
-	const pageData: PageData = { ...data, profile: null };
+	// The page only reads `lang` and `resume`; the layout's profile and attention aren't used here.
+	const pageData: PageData = { ...data, profile: null, attention: null };
 	return render(Page, { props: { data: pageData } });
 }
 

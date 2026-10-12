@@ -8,6 +8,7 @@ import {
 	githubFields,
 	isAdmin,
 	isAdminGithubId,
+	privateForAdmin,
 	requireAdmin
 } from '../admin';
 
@@ -126,5 +127,24 @@ describe('adminGuard', () => {
 
 	it.each(['/admin/signin', '/', '/api/pdf', '/administrator'])('never guards %s', async (path) => {
 		expect((await run(path)).status).toBe(200);
+	});
+});
+
+describe('privateForAdmin', () => {
+	const run = (u: User | null) =>
+		privateForAdmin({
+			event: fakeEvent({ locals: { user: u } }),
+			resolve: async () => new Response('ok', { headers: { 'cache-control': 'no-store' } })
+		});
+
+	it('keeps whatever is sent to the admin out of shared caches', async () => {
+		expect((await run(admin)).headers.get('cache-control')).toBe('private, no-store');
+	});
+
+	it.each([
+		['a visitor', null],
+		['a signed-in non-admin', someoneElse]
+	])("leaves the route's own header for %s", async (_, u) => {
+		expect((await run(u)).headers.get('cache-control')).toBe('no-store');
 	});
 });

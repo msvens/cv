@@ -4,7 +4,7 @@ import Page from './+page.svelte';
 import type { PageData } from './$types';
 
 const renderPage = (data: Pick<PageData, 'lang' | 'denied'>) => {
-	const pageData: PageData = { ...data, profile: null };
+	const pageData: PageData = { ...data, profile: null, attention: null };
 	return render(Page, { props: { data: pageData } });
 };
 

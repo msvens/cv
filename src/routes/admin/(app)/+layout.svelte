@@ -10,7 +10,7 @@
 </svelte:head>
 
 <div class="mx-auto max-w-5xl px-6 md:flex md:gap-8 md:py-8">
-	<AdminNav attentionCount={data.attentionCount} />
+	<AdminNav attentionCount={data.attention?.count ?? 0} />
 	<div class="min-w-0 flex-1 py-6 md:py-6">{@render children()}</div>
 </div>
 

@@ -1,7 +1,6 @@
 import { isHttpError, type RequestEvent } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ownerToday } from '$lib/dates';
-import { application, settings } from '$lib/server/db/schema';
+import { settings } from '$lib/server/db/schema';
 import { fakeEvent } from '$lib/server/testing/fakeEvent';
 import { db, resetDb } from '$lib/server/testing/testDb';
 import { load as layoutLoad } from '../+layout.server';
@@ -33,13 +32,6 @@ const save = (attentionDays: string, as = admin) =>
 		})
 	);
 
-/** A date `n` days from today on the owner's calendar. */
-const inDays = (n: number) => {
-	const d = new Date(`${ownerToday()}T00:00:00Z`);
-	d.setUTCDate(d.getUTCDate() + n);
-	return d.toISOString().slice(0, 10);
-};
-
 beforeEach(resetDb);
 
 describe('settings action', () => {
@@ -65,22 +57,13 @@ describe('settings action', () => {
 	);
 });
 
+// The attention count itself is the root layout's (src/routes/layout.server.test.ts).
 describe('admin layout', () => {
-	const load = (as = admin) =>
+	const load = (as: typeof admin) =>
 		layoutLoad(fakeEvent<Parameters<typeof layoutLoad>[0]>({ locals: { user: as } }));
 
-	it('counts what needs attention within the saved window', async () => {
-		await db.insert(application).values([
-			{ company: 'A', role: 'R', deadline: inDays(-1) },
-			{ company: 'B', role: 'R', deadline: inDays(10) },
-			{ company: 'C', role: 'R', deadline: inDays(1), status: 'applied' }
-		]);
-		expect(await load()).toEqual({ attentionCount: 1 });
-		await save('14');
-		expect(await load()).toEqual({ attentionCount: 2 });
-	});
-
-	it('is a 403 for anyone but the admin', async () => {
-		await expect(load(stranger)).rejects.toSatisfy((e: unknown) => isHttpError(e, 403));
+	it('is a 403 for anyone but the admin', () => {
+		expect(() => load(stranger)).toThrow(expect.toSatisfy((e) => isHttpError(e, 403)));
+		expect(() => load(admin)).not.toThrow();
 	});
 });

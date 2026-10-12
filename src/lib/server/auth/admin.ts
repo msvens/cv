@@ -57,3 +57,13 @@ export const adminGuard: Handle = ({ event, resolve }) => {
 	}
 	return resolve(event);
 };
+
+/**
+ * Anything rendered for the admin may carry private data (admin pages, the front-page notice,
+ * PDFs), so no shared cache may store it. Set here, once, rather than in each route.
+ */
+export const privateForAdmin: Handle = async ({ event, resolve }) => {
+	const response = await resolve(event);
+	if (isAdmin(event.locals.user)) response.headers.set('cache-control', 'private, no-store');
+	return response;
+};
