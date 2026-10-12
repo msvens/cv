@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { STATUSES, STATUS_LABELS, statusLabel } from '$lib/applications';
+	import { STATUSES, STATUS_LABELS, attentionLabel, statusLabel } from '$lib/applications';
 	import DeleteButton from '$lib/components/admin/DeleteButton.svelte';
 	import FormMessage from '$lib/components/admin/FormMessage.svelte';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
@@ -23,6 +23,11 @@
 	let saving = $state(false);
 	let changing = $state(false);
 
+	const tag = {
+		overdue:
+			'border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400',
+		soon: 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300'
+	};
 	const box = 'max-w-3xl space-y-4 rounded border border-neutral-200 p-4 dark:border-neutral-800';
 	const heading = 'font-medium text-neutral-900 dark:text-neutral-100';
 	const field =
@@ -46,6 +51,12 @@
 </PageHeader>
 
 <div class="space-y-8">
+	{#if data.attention}
+		<p class={['max-w-3xl rounded border px-4 py-2 text-sm font-medium', tag[data.attention.kind]]}>
+			{attentionLabel(data.attention)}
+		</p>
+	{/if}
+
 	{#if form && 'error' in form && form.error}
 		<FormMessage text={form.error} />
 	{/if}

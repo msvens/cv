@@ -2,6 +2,7 @@
 	import '@fontsource-variable/geist-mono';
 	import { onMount } from 'svelte';
 	import './layout.css';
+	import AttentionNotice from '$lib/components/layout/AttentionNotice.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import TopBar from '$lib/components/layout/TopBar.svelte';
 	import { socialLinks } from '$lib/social';
@@ -34,6 +35,7 @@
 
 <div class="flex min-h-screen flex-col font-sans">
 	<TopBar lang={data.lang} {links} />
+	<AttentionNotice attention={data.attention} lang={data.lang} />
 	<div class="flex-1">
 		{@render children()}
 	</div>

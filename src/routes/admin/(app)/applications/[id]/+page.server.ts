@@ -1,4 +1,5 @@
 import { error, fail, redirect } from '@sveltejs/kit';
+import { attention } from '$lib/applications';
 import { ownerToday } from '$lib/dates';
 import { applicationValues } from '$lib/server/applicationForms';
 import { requireAdmin } from '$lib/server/auth/admin';
@@ -10,6 +11,7 @@ import {
 	listStatusChanges,
 	updateApplication
 } from '$lib/server/services/applications';
+import { getSettings } from '$lib/server/services/settings';
 import { applicationSchema, statusSchema } from '$lib/validation/schemas';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -21,9 +23,14 @@ function applicationId(param: string): number {
 
 export const load: PageServerLoad = async ({ params }) => {
 	const id = applicationId(params.id);
-	const application = await getApplication(id);
+	const [application, timeline, { attentionDays }] = await Promise.all([
+		getApplication(id),
+		listStatusChanges(id),
+		getSettings()
+	]);
 	if (!application) error(404, 'No such application');
-	return { application, timeline: await listStatusChanges(id) };
+	// Same rule as the list and the front-page notice, so they never disagree.
+	return { application, timeline, attention: attention(application, ownerToday(), attentionDays) };
 };
 
 // Success returns { message }; a failure that isn't a field error returns { error }.

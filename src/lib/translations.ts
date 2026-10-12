@@ -1,5 +1,11 @@
 import type { Language } from '$lib/i18n';
 
+/** A count-dependent string: `one` for 1, `other` for anything else; `{n}` is the count. */
+export interface Plural {
+	one: string;
+	other: string;
+}
+
 export interface Translations {
 	topBar: {
 		downloadPdf: string;
@@ -26,6 +32,12 @@ export interface Translations {
 		signInIntro: string;
 		signIn: string;
 		accessDenied: string;
+	};
+	notice: {
+		/** Front-page notice for the signed-in admin (R9); `{n}` is the count. */
+		needAttention: Plural;
+		/** The same when it is exactly one; `{name}` is "Company · Role". */
+		needsAttention: string;
 	};
 	meta: {
 		/** Page title suffix: "<name> — Resume". */
@@ -63,6 +75,13 @@ const translations: Record<Language, Translations> = {
 			signIn: 'Sign in with GitHub',
 			accessDenied: 'Access denied — your account is not authorized.'
 		},
+		notice: {
+			needAttention: {
+				one: '1 application needs attention',
+				other: '{n} applications need attention'
+			},
+			needsAttention: '{name} needs attention'
+		},
 		meta: {
 			resume: 'Resume',
 			descriptionOf: 'Resume and portfolio of'
@@ -95,6 +114,13 @@ const translations: Record<Language, Translations> = {
 			signIn: 'Logga in med GitHub',
 			accessDenied: 'Åtkomst nekad — ditt konto har inte behörighet.'
 		},
+		notice: {
+			needAttention: {
+				one: '1 ansökan behöver åtgärdas',
+				other: '{n} ansökningar behöver åtgärdas'
+			},
+			needsAttention: '{name} behöver åtgärdas'
+		},
 		meta: {
 			resume: 'CV',
 			descriptionOf: 'CV och portfolio för'
@@ -104,4 +130,9 @@ const translations: Record<Language, Translations> = {
 
 export function getTranslation(lang: Language): Translations {
 	return translations[lang];
+}
+
+/** Picks the form for `count` and fills in `{n}`. */
+export function plural(count: number, forms: Plural): string {
+	return (count === 1 ? forms.one : forms.other).replace('{n}', String(count));
 }
