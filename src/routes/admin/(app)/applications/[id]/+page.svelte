@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { STATUSES, STATUS_LABELS, attentionLabel, statusLabel } from '$lib/applications';
+	import type { SubmitFunction } from '@sveltejs/kit';
+	import ContactFields from '$lib/components/admin/ContactFields.svelte';
 	import DeleteButton from '$lib/components/admin/DeleteButton.svelte';
 	import FormMessage from '$lib/components/admin/FormMessage.svelte';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
@@ -13,11 +15,37 @@
 	let { data, form } = $props();
 
 	const a = $derived(data.application);
+	// A failed contact save names its form (`target`: 'new-contact' or the contact's id); a failed
+	// details save has none. Each form shows only its own submission and errors.
+	const target = $derived(form && 'target' in form ? form.target : null);
+	const failed = $derived(form && 'values' in form && form.values ? form.values : null);
+	const failedDetails = $derived(!target && failed && 'company' in failed ? failed : null);
+	const failedContact = $derived(target && failed && 'name' in failed ? failed : null);
 	// After a failed save, show what was submitted (with the errors); otherwise the stored values.
-	const v = $derived(form && 'values' in form && form.values ? form.values : a);
-	const errors: Partial<Record<string, string[]>> = $derived(
+	const v = $derived(failedDetails ?? a);
+	const allErrors: Partial<Record<string, string[]>> = $derived(
 		(form && 'errors' in form && form.errors) || {}
 	);
+	const errors = $derived(target ? {} : allErrors);
+	const contactErrors = (formId: string) => (target === formId ? allErrors : {});
+	const contactValuesFor = <T,>(formId: string, stored: T) =>
+		target === formId && failedContact ? failedContact : stored;
+
+	let editingContact: number | null = $state(null);
+	let addingContact = $state(false);
+	let savingContact = $state(false);
+	// On success, close whichever contact form was open.
+	const closeOnSuccess: SubmitFunction = () => {
+		savingContact = true;
+		return async ({ result, update }) => {
+			await update();
+			savingContact = false;
+			if (result.type === 'success') {
+				editingContact = null;
+				addingContact = false;
+			}
+		};
+	};
 	const adHref = $derived(a.adUrl ? safeHref(a.adUrl) : null);
 
 	let saving = $state(false);
@@ -33,6 +61,7 @@
 	const field =
 		'w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100';
 	const label = 'mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300';
+	const quiet = 'text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100';
 </script>
 
 <PageHeader
@@ -104,7 +133,7 @@
 		}}
 	>
 		<h2 class={heading}>Details</h2>
-		{#if form && 'errors' in form}
+		{#if failedDetails}
 			<FormMessage text="Please fix the fields marked below." />
 		{/if}
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -157,4 +186,91 @@
 				value={v.adText ?? ''}></textarea>
 		</div>
 	</form>
+
+	<section class={box} aria-labelledby="contacts-heading">
+		<h2 id="contacts-heading" class={heading}>Contacts</h2>
+		{#if data.contacts.length === 0 && !(addingContact || target === 'new-contact')}
+			<p class="text-sm text-neutral-500">No contacts yet.</p>
+		{/if}
+		<ul class="space-y-2">
+			{#each data.contacts as contact (contact.id)}
+				{@const formId = String(contact.id)}
+				<li>
+					{#if editingContact === contact.id || target === formId}
+						<form method="POST" action="?/updateContact" class={box} use:enhance={closeOnSuccess}>
+							<input type="hidden" name="id" value={contact.id} />
+							<ContactFields
+								idPrefix="contact-{contact.id}"
+								values={contactValuesFor(formId, contact)}
+								errors={contactErrors(formId)}
+							/>
+							<div class="flex gap-2">
+								<SubmitButton pending={savingContact} />
+								<button type="button" class={quiet} onclick={() => (editingContact = null)}
+									>Cancel</button
+								>
+							</div>
+						</form>
+					{:else}
+						<div
+							class="flex items-start gap-3 rounded border border-neutral-200 p-3 text-sm dark:border-neutral-800"
+						>
+							<div class="min-w-0 flex-1 space-y-0.5">
+								<p>
+									<span class="font-medium text-neutral-900 dark:text-neutral-100"
+										>{contact.name}</span
+									>{#if contact.role}<span class="text-neutral-500"> · {contact.role}</span>{/if}
+								</p>
+								{#if contact.email || contact.phone}
+									<p class="flex flex-wrap gap-x-4">
+										{#if contact.email}<a class="underline" href="mailto:{contact.email}"
+												>{contact.email}</a
+											>{/if}
+										{#if contact.phone}<a class="underline" href="tel:{contact.phone}"
+												>{contact.phone}</a
+											>{/if}
+									</p>
+								{/if}
+								{#if contact.note}
+									<p class="whitespace-pre-line text-neutral-600 dark:text-neutral-400">
+										{contact.note}
+									</p>
+								{/if}
+							</div>
+							<div class="flex shrink-0 items-center gap-2">
+								<button class={quiet} onclick={() => (editingContact = contact.id)}>Edit</button>
+								<DeleteButton
+									action="?/deleteContact"
+									id={contact.id}
+									label="Delete contact"
+									confirmText="Delete “{contact.name}”?"
+								/>
+							</div>
+						</div>
+					{/if}
+				</li>
+			{/each}
+		</ul>
+
+		{#if addingContact || target === 'new-contact'}
+			<form method="POST" action="?/addContact" class={box} use:enhance={closeOnSuccess}>
+				<h3 class={heading}>New contact</h3>
+				<ContactFields
+					idPrefix="new-contact"
+					values={contactValuesFor('new-contact', {})}
+					errors={contactErrors('new-contact')}
+				/>
+				<div class="flex gap-2">
+					<SubmitButton pending={savingContact} label="Add" />
+					<button type="button" class={quiet} onclick={() => (addingContact = false)}>Cancel</button
+					>
+				</div>
+			</form>
+		{:else}
+			<button
+				class="rounded border border-neutral-300 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+				onclick={() => (addingContact = true)}>+ Add contact</button
+			>
+		{/if}
+	</section>
 </div>
