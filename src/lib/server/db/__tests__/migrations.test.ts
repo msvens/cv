@@ -21,6 +21,7 @@ describe('migrations', () => {
 		const tables = new Set(columns.rows.map((c) => c.table_name));
 		expect([...tables].sort()).toEqual([
 			'application',
+			'application_contact',
 			'application_status_change',
 			'profile',
 			'profile_photo',

@@ -1,6 +1,7 @@
 import type { InferSelectModel } from 'drizzle-orm';
 import type {
 	application,
+	applicationContact,
 	applicationStatusChange,
 	profile,
 	section,
@@ -17,3 +18,4 @@ export type SectionWithItems = SectionData & {
 
 export type ApplicationData = InferSelectModel<typeof application>;
 export type StatusChange = InferSelectModel<typeof applicationStatusChange>;
+export type ApplicationContact = InferSelectModel<typeof applicationContact>;

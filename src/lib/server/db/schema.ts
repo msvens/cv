@@ -116,6 +116,24 @@ export const applicationStatusChange = pgTable(
 	(t) => [index('application_status_change_application_idx').on(t.applicationId)]
 );
 
+/** People at the company for an application (R6); the letter can address one of them. */
+export const applicationContact = pgTable(
+	'application_contact',
+	{
+		id: serial('id').primaryKey(),
+		applicationId: integer('application_id')
+			.notNull()
+			.references(() => application.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		role: text('role'),
+		email: text('email'),
+		phone: text('phone'),
+		note: text('note'),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [index('application_contact_application_idx').on(t.applicationId)]
+);
+
 /**
  * Site settings: one row (the CHECK makes that a database rule), one typed column per setting,
  * each with a default. Reads fall back to the defaults while the row doesn't exist; a new

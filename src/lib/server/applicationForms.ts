@@ -13,3 +13,14 @@ export function applicationValues(form: FormData) {
 		adText: text(form, 'adText')
 	};
 }
+
+/** A contact form's fields (add and edit on the application page). */
+export function contactValues(form: FormData) {
+	return {
+		name: text(form, 'name'),
+		role: text(form, 'role'),
+		email: text(form, 'email'),
+		phone: text(form, 'phone'),
+		note: text(form, 'note')
+	};
+}

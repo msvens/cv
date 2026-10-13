@@ -2,7 +2,7 @@ import { isHttpError, isRedirect, type RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ownerToday } from '$lib/dates';
-import { application, applicationStatusChange } from '$lib/server/db/schema';
+import { application, applicationContact, applicationStatusChange } from '$lib/server/db/schema';
 import { fakeEvent } from '$lib/server/testing/fakeEvent';
 import { db, resetDb } from '$lib/server/testing/testDb';
 import { load as adminLoad } from '../../+page.server';
@@ -152,6 +152,82 @@ describe('application actions', () => {
 	});
 });
 
+describe('contact actions', () => {
+	const anna = {
+		name: 'Anna Berg',
+		role: 'Recruiter',
+		email: 'anna@example.com',
+		phone: '',
+		note: ''
+	};
+	let contactId: number;
+	beforeEach(async () => {
+		[{ id: contactId }] = await db
+			.insert(applicationContact)
+			.values({ applicationId: id, name: 'Bo Ek' })
+			.returning();
+	});
+	const contacts = () => db.select().from(applicationContact);
+
+	it.each([
+		['addContact', () => detailActions.addContact(event(anna, { id, as: stranger }))],
+		[
+			'updateContact',
+			() =>
+				detailActions.updateContact(event({ ...anna, id: String(contactId) }, { id, as: stranger }))
+		],
+		[
+			'deleteContact',
+			() => detailActions.deleteContact(event({ id: String(contactId) }, { id, as: stranger }))
+		]
+	])('%s is a 403 for anyone but the admin', async (_, run) => {
+		await expect(run()).rejects.toSatisfy((e: unknown) => isHttpError(e, 403));
+		expect(await contacts()).toMatchObject([{ name: 'Bo Ek', role: null }]);
+	});
+
+	it('adds, edits and deletes a contact', async () => {
+		expect(await detailActions.addContact(event(anna, { id }))).toEqual({
+			message: 'Contact added.'
+		});
+		expect(
+			await detailActions.updateContact(
+				event({ ...anna, name: 'Bo Ek', role: 'CTO', id: String(contactId) }, { id })
+			)
+		).toEqual({ message: 'Contact saved.' });
+		expect(await detailActions.deleteContact(event({ id: String(contactId) }, { id }))).toEqual({
+			message: 'Contact deleted.'
+		});
+		expect(await contacts()).toMatchObject([{ name: 'Anna Berg', email: 'anna@example.com' }]);
+	});
+
+	it('turns a blank name or a bad email into field errors for the right form', async () => {
+		const bad = { ...anna, name: '', email: 'not-an-email' };
+		expect(await detailActions.addContact(event(bad, { id }))).toMatchObject({
+			status: 400,
+			data: {
+				target: 'new-contact',
+				values: bad,
+				errors: { name: [expect.any(String)], email: [expect.any(String)] }
+			}
+		});
+		expect(
+			await detailActions.updateContact(event({ ...bad, id: String(contactId) }, { id }))
+		).toMatchObject({ status: 400, data: { target: String(contactId) } });
+		expect(await contacts()).toMatchObject([{ name: 'Bo Ek' }]);
+	});
+
+	it('reports a contact or application that is gone', async () => {
+		const missing = { id: '999' };
+		expect(await detailActions.addContact(event(anna, { id: 999 }))).toMatchObject({ status: 404 });
+		expect(await detailActions.updateContact(event({ ...anna, ...missing }, { id }))).toMatchObject(
+			{ status: 404 }
+		);
+		expect(await detailActions.deleteContact(event(missing, { id }))).toMatchObject({
+			status: 404
+		});
+	});
+});
+
 describe('application pages', () => {
 	it('is a 404 for a missing or malformed id', async () => {
 		for (const param of ['999', 'abc']) {
@@ -165,6 +241,7 @@ describe('application pages', () => {
 		expect(data).toMatchObject({
 			application: { company: 'Klarna' },
 			timeline: [{ status: 'not_applied' }],
+			contacts: [],
 			attention: null
 		});
 	});

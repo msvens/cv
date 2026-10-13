@@ -96,6 +96,14 @@ export const newApplicationSchema = applicationSchema.pick({ company: true, role
 
 export const statusSchema = z.enum(STATUSES);
 
+export const contactSchema = z.object({
+	name: required,
+	role: z.string(),
+	email: z.email('Not a valid email address').or(blank),
+	phone: z.string(),
+	note: z.string()
+});
+
 export const settingsSchema = z.object({
 	attentionDays: z.coerce
 		.number({ error: 'A whole number of days' })
@@ -109,4 +117,5 @@ export type SectionInput = z.infer<typeof sectionSchema>;
 export type SectionItemInput = z.infer<typeof sectionItemSchema>;
 export type ApplicationInput = z.infer<typeof applicationSchema>;
 export type NewApplicationInput = z.infer<typeof newApplicationSchema>;
+export type ContactInput = z.infer<typeof contactSchema>;
 export type SettingsInput = z.infer<typeof settingsSchema>;
