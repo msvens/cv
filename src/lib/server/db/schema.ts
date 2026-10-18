@@ -135,6 +135,28 @@ export const applicationContact = pgTable(
 );
 
 /**
+ * An application's personal letter: at most one (the unique application_id). The PDF options are
+ * stored, so the same letter always renders the same PDF. Language is `text`, checked in code.
+ */
+export const letter = pgTable('letter', {
+	id: serial('id').primaryKey(),
+	applicationId: integer('application_id')
+		.notNull()
+		.unique()
+		.references(() => application.id, { onDelete: 'cascade' }),
+	language: text('language').notNull(),
+	body: text('body').notNull().default(''),
+	includeContact: boolean('include_contact').notNull().default(false),
+	includeRecipient: boolean('include_recipient').notNull().default(false),
+	/** Deleting the contact leaves the letter addressed to the company only. */
+	recipientContactId: integer('recipient_contact_id').references(() => applicationContact.id, {
+		onDelete: 'set null'
+	}),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+/**
  * Site settings: one row (the CHECK makes that a database rule), one typed column per setting,
  * each with a default. Reads fall back to the defaults while the row doesn't exist; a new
  * setting is a new column. Defaults mirror SETTINGS_DEFAULTS ($lib/settings), tested.

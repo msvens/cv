@@ -23,6 +23,7 @@ describe('migrations', () => {
 			'application',
 			'application_contact',
 			'application_status_change',
+			'letter',
 			'profile',
 			'profile_photo',
 			'section',
@@ -46,6 +47,16 @@ describe('migrations', () => {
 			sql`select delete_rule from information_schema.referential_constraints where constraint_name = 'application_status_change_application_id_application_id_fk'`
 		);
 		expect(rule.rows[0].delete_rule).toBe('CASCADE');
+	});
+
+	it('deletes a letter with its application, and keeps it when its contact goes (0008)', async () => {
+		const rules = await db.execute<{ constraint_name: string; delete_rule: string }>(
+			sql`select constraint_name, delete_rule from information_schema.referential_constraints where constraint_name like 'letter_%'`
+		);
+		expect(Object.fromEntries(rules.rows.map((r) => [r.constraint_name, r.delete_rule]))).toEqual({
+			letter_application_id_application_id_fk: 'CASCADE',
+			letter_recipient_contact_id_application_contact_id_fk: 'SET NULL'
+		});
 	});
 
 	it('keeps settings to one row (0006)', async () => {

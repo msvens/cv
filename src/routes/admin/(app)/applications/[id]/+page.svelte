@@ -74,7 +74,7 @@
 		<DeleteButton
 			action="?/delete"
 			label="Delete application"
-			confirmText="Delete “{a.company} · {a.role}” and its timeline?"
+			confirmText="Delete “{a.company} · {a.role}” with its timeline, contacts and letter?"
 		/>
 	{/snippet}
 </PageHeader>
@@ -270,6 +270,29 @@
 			<button
 				class="rounded border border-neutral-300 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
 				onclick={() => (addingContact = true)}>+ Add contact</button
+			>
+		{/if}
+	</section>
+
+	<section class={box} aria-labelledby="letter-heading">
+		<h2 id="letter-heading" class={heading}>Letter</h2>
+		{#if data.letter}
+			<div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+				<p class="text-neutral-600 dark:text-neutral-400">
+					{data.letter.language === 'sv' ? 'Swedish' : 'English'} · updated {formatDay(
+						data.letter.updatedAt
+					)}
+				</p>
+				<a class="underline" href="/admin/applications/{a.id}/letter">Edit</a>
+				<a class="underline" href="/admin/applications/{a.id}/letter.pdf" target="_blank"
+					>View PDF</a
+				>
+			</div>
+		{:else}
+			<p class="text-sm text-neutral-500">No letter yet.</p>
+			<a
+				class="inline-block rounded border border-neutral-300 px-4 py-2 text-sm transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+				href="/admin/applications/{a.id}/letter">Write a letter</a
 			>
 		{/if}
 	</section>
