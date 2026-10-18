@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { resolveLanguage } from '$lib/i18n';
-import { buildResumeDoc, fileSlug } from '$lib/server/pdf/resumeDoc';
+import { buildResumeDoc } from '$lib/server/pdf/resumeDoc';
+import { fileSlug } from '$lib/server/pdf/shared';
 import { renderPdf } from '$lib/server/pdf/render';
 import { buildResumeView } from '$lib/server/resume';
 import { getProfile } from '$lib/server/services/profile';

@@ -3,6 +3,7 @@ import type {
 	application,
 	applicationContact,
 	applicationStatusChange,
+	letter,
 	profile,
 	section,
 	sectionItem
@@ -19,3 +20,4 @@ export type SectionWithItems = SectionData & {
 export type ApplicationData = InferSelectModel<typeof application>;
 export type StatusChange = InferSelectModel<typeof applicationStatusChange>;
 export type ApplicationContact = InferSelectModel<typeof applicationContact>;
+export type Letter = InferSelectModel<typeof letter>;

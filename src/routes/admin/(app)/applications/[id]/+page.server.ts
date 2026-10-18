@@ -1,7 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { attention } from '$lib/applications';
 import { ownerToday } from '$lib/dates';
-import { applicationValues, contactValues } from '$lib/server/applicationForms';
+import { applicationId, applicationValues, contactValues } from '$lib/server/applicationForms';
 import { requireAdmin } from '$lib/server/auth/admin';
 import { invalid, positiveInt, text } from '$lib/server/forms';
 import {
@@ -15,22 +15,18 @@ import {
 	updateApplication,
 	updateContact
 } from '$lib/server/services/applications';
+import { getLetter } from '$lib/server/services/letters';
 import { getSettings } from '$lib/server/services/settings';
 import { applicationSchema, contactSchema, statusSchema } from '$lib/validation/schemas';
 import type { Actions, PageServerLoad } from './$types';
 
-function applicationId(param: string): number {
-	const id = Number(param);
-	if (!Number.isInteger(id) || id <= 0) error(404, 'No such application');
-	return id;
-}
-
 export const load: PageServerLoad = async ({ params }) => {
 	const id = applicationId(params.id);
-	const [application, timeline, contacts, { attentionDays }] = await Promise.all([
+	const [application, timeline, contacts, letter, { attentionDays }] = await Promise.all([
 		getApplication(id),
 		listStatusChanges(id),
 		listContacts(id),
+		getLetter(id),
 		getSettings()
 	]);
 	if (!application) error(404, 'No such application');
@@ -39,6 +35,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		application,
 		timeline,
 		contacts,
+		letter,
 		attention: attention(application, ownerToday(), attentionDays)
 	};
 };

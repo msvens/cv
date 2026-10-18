@@ -100,10 +100,10 @@ export async function deleteApplication(id: number): Promise<'ok' | 'not-found'>
 	return rows.length ? 'ok' : 'not-found';
 }
 
-type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /** Marks the application as just worked on (the list's order); false when it doesn't exist. */
-async function touchApplication(tx: Tx, id: number): Promise<boolean> {
+export async function touchApplication(tx: Tx, id: number): Promise<boolean> {
 	const rows = await tx
 		.update(application)
 		.set({ updatedAt: new Date() })

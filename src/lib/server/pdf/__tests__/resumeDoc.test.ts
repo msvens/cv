@@ -2,7 +2,9 @@ import type { Content, Node, NodeQueries } from 'pdfmake/interfaces';
 import { describe, expect, it } from 'vitest';
 import type { ResumeView } from '$lib/resume';
 import type { SocialLink } from '$lib/social';
-import { buildResumeDoc, fileSlug, keepHeadingWithContent } from '../resumeDoc';
+import { buildResumeDoc, keepHeadingWithContent } from '../resumeDoc';
+import { fileSlug } from '../shared';
+import { nodes, text } from './content';
 
 const view: ResumeView = {
 	header: {
@@ -60,25 +62,6 @@ const view: ResumeView = {
 };
 
 const github: SocialLink = { label: 'GitHub', href: 'https://github.com/msvens' };
-
-/** Every node in a pdfmake content tree, depth first. */
-function nodes(content: unknown): Record<string, unknown>[] {
-	if (Array.isArray(content)) return content.flatMap(nodes);
-	if (content === null || typeof content !== 'object') return [];
-	const node = content as Record<string, unknown>;
-	return [node, ...Object.values(node).flatMap(nodes)];
-}
-
-/** All text in a content tree, concatenated. */
-function text(content: unknown): string {
-	if (typeof content === 'string') return content;
-	if (Array.isArray(content)) return content.map(text).join('');
-	if (content && typeof content === 'object') {
-		const node = content as Record<string, unknown>;
-		return ['text', 'stack', 'columns', 'ul', 'ol'].map((k) => text(node[k])).join('');
-	}
-	return '';
-}
 
 const content = (lang: 'en' | 'sv' = 'en', links = [github], v = view) =>
 	buildResumeDoc(v, links, lang).content as Content[];

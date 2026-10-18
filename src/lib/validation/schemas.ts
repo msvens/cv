@@ -104,6 +104,15 @@ export const contactSchema = z.object({
 	note: z.string()
 });
 
+export const letterSchema = z.object({
+	language: z.enum(['en', 'sv'], 'English or Swedish'),
+	// Empty is fine: a draft can be saved before it has any text.
+	body: z.string(),
+	includeContact: z.boolean(),
+	includeRecipient: z.boolean(),
+	recipientContactId: z.number().int().positive().nullable()
+});
+
 export const settingsSchema = z.object({
 	attentionDays: z.coerce
 		.number({ error: 'A whole number of days' })
@@ -118,4 +127,5 @@ export type SectionItemInput = z.infer<typeof sectionItemSchema>;
 export type ApplicationInput = z.infer<typeof applicationSchema>;
 export type NewApplicationInput = z.infer<typeof newApplicationSchema>;
 export type ContactInput = z.infer<typeof contactSchema>;
+export type LetterInput = z.infer<typeof letterSchema>;
 export type SettingsInput = z.infer<typeof settingsSchema>;
