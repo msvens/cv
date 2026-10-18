@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { tick } from 'svelte';
+	import { onMount, tick } from 'svelte';
+	import { ArrowsPointingIn, ArrowsPointingOut, Eye, EyeSlash, Icon } from 'svelte-hero-icons';
 	import Markdown from '$lib/components/resume/Markdown.svelte';
 	import { prefixLine, wrapSelection, type Edit } from '$lib/markdownEdit';
 	import { parseMarkdown } from '$lib/markdownParse';
@@ -20,6 +21,42 @@
 	// Live preview: the same parser and renderer as the public page, so what you see is what
 	// gets published.
 	const preview = $derived(parseMarkdown(value));
+
+	// Hiding the preview gives the text the full width. Each editor has its own setting, kept
+	// in this browser per field; localStorage can throw (storage disabled), and then it isn't.
+	const previewKey = $derived(`md-preview:${id}`);
+	let showPreview = $state(true);
+	onMount(() => {
+		try {
+			showPreview = localStorage.getItem(previewKey) !== 'off';
+		} catch {
+			// Not stored: the preview shows.
+		}
+	});
+	function togglePreview() {
+		showPreview = !showPreview;
+		try {
+			localStorage.setItem(previewKey, showPreview ? 'on' : 'off');
+		} catch {
+			// Not persisted; the choice still applies on this page.
+		}
+	}
+
+	// Expanded: the editor fills the window until Esc or the button; the page behind holds still.
+	let expanded = $state(false);
+	$effect(() => {
+		if (!expanded) return;
+		const overflow = document.body.style.overflow;
+		document.body.style.overflow = 'hidden';
+		return () => {
+			document.body.style.overflow = overflow;
+		};
+	});
+	async function toggleExpanded() {
+		expanded = !expanded;
+		await tick();
+		textarea?.focus();
+	}
 
 	async function apply(edit: (el: HTMLTextAreaElement) => Edit) {
 		if (!textarea) return;
@@ -50,9 +87,20 @@
 		'rounded px-2 py-0.5 text-xs text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100';
 </script>
 
-<div>
+<svelte:window
+	onkeydown={(e) => {
+		if (expanded && e.key === 'Escape') toggleExpanded();
+	}}
+/>
+
+<div class={[expanded && 'fixed inset-0 z-70 flex flex-col bg-white p-4 dark:bg-neutral-950']}>
 	{#if label}<label for={id} class="mb-1 block text-xs text-neutral-500">{label}</label>{/if}
-	<div class="overflow-hidden rounded border border-neutral-300 dark:border-neutral-700">
+	<div
+		class={[
+			'overflow-hidden rounded border border-neutral-300 dark:border-neutral-700',
+			expanded && 'flex min-h-0 flex-1 flex-col'
+		]}
+	>
 		<div
 			role="toolbar"
 			aria-label="Formatting"
@@ -63,29 +111,64 @@
 					>{tool.label}</button
 				>
 			{/each}
+			<span class="ml-auto flex gap-1">
+				<button
+					type="button"
+					class={toolButton}
+					aria-label="Preview"
+					aria-pressed={showPreview}
+					title={showPreview ? 'Hide the preview' : 'Show the preview'}
+					onclick={togglePreview}
+				>
+					<Icon src={showPreview ? Eye : EyeSlash} class="h-4 w-4" />
+				</button>
+				<button
+					type="button"
+					class={toolButton}
+					aria-label="Expand"
+					aria-pressed={expanded}
+					title={expanded ? 'Back to the page (Esc)' : 'Fill the window'}
+					onclick={toggleExpanded}
+				>
+					<Icon src={expanded ? ArrowsPointingIn : ArrowsPointingOut} class="h-4 w-4" />
+				</button>
+			</span>
 		</div>
 		<!-- Text and live preview: side by side on desktop, stacked on mobile. -->
-		<div class="grid grid-cols-1 md:grid-cols-2">
+		<div
+			class={['grid grid-cols-1', showPreview && 'md:grid-cols-2', expanded && 'min-h-0 flex-1']}
+		>
 			<textarea
 				bind:this={textarea}
 				bind:value
 				{id}
 				{name}
 				{rows}
-				class="w-full resize-y bg-white px-3 py-2 font-mono text-sm text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100"
-			></textarea>
-			<div
-				class="border-t border-neutral-300 bg-neutral-50/50 px-3 py-2 text-sm leading-relaxed text-neutral-700 md:border-t-0 md:border-l dark:border-neutral-700 dark:bg-neutral-900/50 dark:text-neutral-300"
-				aria-label="Preview"
-				role="region"
-				data-testid="markdown-preview"
-			>
-				{#if value.trim()}
-					<Markdown blocks={preview} />
-				{:else}
-					<span class="text-neutral-400 italic">Nothing to preview</span>
-				{/if}
-			</div>
+				class={[
+					'w-full resize-y bg-white px-3 py-2 font-mono text-sm text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100',
+					expanded && 'h-full resize-none'
+				]}></textarea>
+			{#if showPreview}
+				<!-- Side by side, the preview fills the textarea's height and scrolls: the textarea
+				     alone sets the editor's height, so showing or hiding the preview never changes it. -->
+				<div
+					class={[
+						'relative border-t border-neutral-300 bg-neutral-50/50 text-sm leading-relaxed text-neutral-700 md:border-t-0 md:border-l dark:border-neutral-700 dark:bg-neutral-900/50 dark:text-neutral-300',
+						expanded && 'overflow-auto'
+					]}
+					aria-label="Preview"
+					role="region"
+					data-testid="markdown-preview"
+				>
+					<div class="px-3 py-2 md:absolute md:inset-0 md:overflow-auto">
+						{#if value.trim()}
+							<Markdown blocks={preview} />
+						{:else}
+							<span class="text-neutral-400 italic">Nothing to preview</span>
+						{/if}
+					</div>
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>
