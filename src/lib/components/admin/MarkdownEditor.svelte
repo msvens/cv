@@ -2,7 +2,8 @@
 	import { onMount, tick } from 'svelte';
 	import { ArrowsPointingIn, ArrowsPointingOut, Eye, EyeSlash, Icon } from 'svelte-hero-icons';
 	import Markdown from '$lib/components/resume/Markdown.svelte';
-	import { prefixLine, wrapSelection, type Edit } from '$lib/markdownEdit';
+	import { htmlToMarkdown } from '$lib/htmlToMarkdown';
+	import { prefixLine, replaceSelection, wrapSelection, type Edit } from '$lib/markdownEdit';
 	import { parseMarkdown } from '$lib/markdownParse';
 
 	let {
@@ -56,6 +57,19 @@
 		expanded = !expanded;
 		await tick();
 		textarea?.focus();
+	}
+
+	// Formatted text (Google Docs, web pages…) pastes as markdown; plain text and code-editor
+	// HTML paste as usual.
+	async function paste(event: ClipboardEvent) {
+		const html = event.clipboardData?.getData('text/html');
+		const markdown = html ? htmlToMarkdown(html) : null;
+		if (markdown === null) return;
+		event.preventDefault();
+		// insertText keeps the paste on the textarea's undo stack (Cmd+Z). It is deprecated, but
+		// every browser supports it and nothing else can; without it, set the value directly.
+		if (document.execCommand?.('insertText', false, markdown)) return;
+		await apply((el) => replaceSelection(value, el.selectionStart, el.selectionEnd, markdown));
 	}
 
 	async function apply(edit: (el: HTMLTextAreaElement) => Edit) {
@@ -144,6 +158,7 @@
 				{id}
 				{name}
 				{rows}
+				onpaste={paste}
 				class={[
 					'w-full resize-y bg-white px-3 py-2 font-mono text-sm text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100',
 					expanded && 'h-full resize-none'
