@@ -52,3 +52,13 @@ export function prefixLine(value: string, cursor: number, prefix: string): Edit 
 		selectionEnd: position
 	};
 }
+
+/** Replace the selection with `text` (a paste), leaving the cursor after it. */
+export function replaceSelection(value: string, start: number, end: number, text: string): Edit {
+	const cursor = start + text.length;
+	return {
+		value: value.slice(0, start) + text + value.slice(end),
+		selectionStart: cursor,
+		selectionEnd: cursor
+	};
+}

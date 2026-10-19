@@ -6,7 +6,6 @@
 	import DeleteButton from '$lib/components/admin/DeleteButton.svelte';
 	import FormMessage from '$lib/components/admin/FormMessage.svelte';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
-	import MarkdownEditor from '$lib/components/admin/MarkdownEditor.svelte';
 	import SubmitButton from '$lib/components/admin/SubmitButton.svelte';
 	import TextField from '$lib/components/admin/TextField.svelte';
 	import { formatDay } from '$lib/dates';
@@ -174,7 +173,10 @@
 				>Open the ad</a
 			>
 		{/if}
-		<MarkdownEditor name="notes" value={v.notes ?? ''} label="Notes (Markdown)" />
+		<div>
+			<label for="notes" class={label}>Notes</label>
+			<textarea id="notes" name="notes" rows="6" class={field} value={v.notes ?? ''}></textarea>
+		</div>
 		<div>
 			<label for="adText" class={label}>The job ad</label>
 			<textarea

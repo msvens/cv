@@ -113,7 +113,7 @@
 			valueEn={p.bioEn}
 			valueSv={p.bioSv}
 			markdown
-			rows={8}
+			rows={14}
 			errorsEn={errors.bioEn}
 			errorsSv={errors.bioSv}
 		/>

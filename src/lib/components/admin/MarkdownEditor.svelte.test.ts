@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import MarkdownEditor from './MarkdownEditor.svelte';
 
 /** Rendered inside a <form>, so we can check what the form would submit. */
@@ -46,5 +46,98 @@ describe('MarkdownEditor', () => {
 		expect(preview.querySelector('h3')).toHaveTextContent('Hi');
 		expect(preview.querySelector('ul li strong')).toHaveTextContent('one');
 		expect(submitted().get('bioEn')).toBe('# Hi\n\n- **one**');
+	});
+});
+
+describe('MarkdownEditor layout', () => {
+	beforeEach(() => localStorage.clear());
+	afterEach(() => vi.restoreAllMocks());
+
+	const previewToggle = () => screen.getByRole('button', { name: 'Preview' });
+	const preview = () => screen.queryByRole('region', { name: 'Preview' });
+
+	it('starts as this browser last left it, and stores each change', async () => {
+		localStorage.setItem('md-preview:a', 'off');
+		const user = userEvent.setup();
+		render(MarkdownEditor, { props: { name: 'a', value: 'x' } });
+		await vi.waitFor(() => expect(preview()).toBeNull());
+		expect(previewToggle()).toHaveAttribute('aria-pressed', 'false');
+		await user.click(previewToggle());
+		expect(preview()).not.toBeNull();
+		expect(previewToggle()).toHaveAttribute('aria-pressed', 'true');
+		expect(localStorage.getItem('md-preview:a')).toBe('on');
+		await user.click(previewToggle());
+		expect(localStorage.getItem('md-preview:a')).toBe('off');
+	});
+
+	it('still toggles when the browser refuses storage', async () => {
+		vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+			throw new Error('denied');
+		});
+		vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+			throw new Error('denied');
+		});
+		const user = userEvent.setup();
+		render(MarkdownEditor, { props: { name: 'a', value: 'x' } });
+		const shown = preview() !== null;
+		await user.click(previewToggle());
+		expect(preview() !== null).toBe(!shown);
+	});
+
+	it('toggles each editor on its own', async () => {
+		const user = userEvent.setup();
+		render(MarkdownEditor, { props: { name: 'en', value: 'x' } });
+		render(MarkdownEditor, { props: { name: 'sv', value: 'y' } });
+		await user.click(screen.getAllByRole('button', { name: 'Preview' })[0]);
+		expect(screen.getAllByRole('region', { name: 'Preview' })).toHaveLength(1);
+		expect(localStorage.getItem('md-preview:en')).toBe('off');
+		expect(localStorage.getItem('md-preview:sv')).toBeNull();
+	});
+
+	it('fills the window until Esc, holding the page still meanwhile', async () => {
+		const user = userEvent.setup();
+		render(MarkdownEditor, { props: { name: 'a', value: 'x' } });
+		const expand = screen.getByRole('button', { name: 'Expand' });
+		await user.click(expand);
+		expect(expand).toHaveAttribute('aria-pressed', 'true');
+		expect(document.querySelector('.fixed.inset-0')).not.toBeNull();
+		expect(document.body.style.overflow).toBe('hidden');
+		await user.keyboard('{Escape}');
+		expect(expand).toHaveAttribute('aria-pressed', 'false');
+		expect(document.querySelector('.fixed.inset-0')).toBeNull();
+		expect(document.body.style.overflow).toBe('');
+	});
+});
+
+describe('MarkdownEditor paste', () => {
+	/** A paste event carrying `data` (type → content), as a browser builds it. */
+	const pasteInto = async (textarea: HTMLTextAreaElement, data: Record<string, string>) => {
+		const event = new Event('paste', { bubbles: true, cancelable: true });
+		Object.defineProperty(event, 'clipboardData', {
+			value: { getData: (type: string) => data[type] ?? '' }
+		});
+		await fireEvent(textarea, event);
+		return event;
+	};
+
+	it('pastes formatted text as markdown in place of the selection', async () => {
+		const { textarea, submitted } = renderEditor('Dear X,');
+		textarea.setSelectionRange(5, 6);
+		const event = await pasteInto(textarea, {
+			'text/html': '<p>Anna and <b>team</b></p>',
+			'text/plain': 'Anna and team'
+		});
+		expect(event.defaultPrevented).toBe(true);
+		expect(textarea).toHaveValue('Dear Anna and **team**,');
+		expect(submitted().get('bioEn')).toBe('Dear Anna and **team**,');
+	});
+
+	it('leaves plain text and code-editor pastes to the browser', async () => {
+		const { textarea } = renderEditor('');
+		expect((await pasteInto(textarea, { 'text/plain': '**md**' })).defaultPrevented).toBe(false);
+		const vscode = {
+			'text/html': '<div style="font-family: Menlo, monospace; white-space: pre;">**md**</div>'
+		};
+		expect((await pasteInto(textarea, vscode)).defaultPrevented).toBe(false);
 	});
 });

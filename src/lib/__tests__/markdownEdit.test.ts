@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { prefixLine, wrapSelection } from '../markdownEdit';
+import { prefixLine, replaceSelection, wrapSelection } from '../markdownEdit';
 
 describe('wrapSelection', () => {
 	it('wraps the selected text and keeps it selected', () => {
@@ -42,5 +42,14 @@ describe('prefixLine', () => {
 
 	it('keeps indentation, for nested lists', () => {
 		expect(prefixLine('- a\n  b', 7, '- ').value).toBe('- a\n  - b');
+	});
+});
+
+describe('replaceSelection', () => {
+	it('replaces the selection and puts the cursor after the new text', () => {
+		const edit = replaceSelection('say hello world', 4, 9, '**hi**');
+		expect(edit.value).toBe('say **hi** world');
+		expect(edit.selectionStart).toBe(10);
+		expect(edit.selectionEnd).toBe(10);
 	});
 });
