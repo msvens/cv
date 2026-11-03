@@ -2,6 +2,7 @@ import type { InferSelectModel } from 'drizzle-orm';
 import type {
 	application,
 	applicationContact,
+	applicationSnapshot,
 	applicationStatusChange,
 	letter,
 	profile,
@@ -21,3 +22,5 @@ export type ApplicationData = InferSelectModel<typeof application>;
 export type StatusChange = InferSelectModel<typeof applicationStatusChange>;
 export type ApplicationContact = InferSelectModel<typeof applicationContact>;
 export type Letter = InferSelectModel<typeof letter>;
+/** A saved snapshot without its bytes: what lists show. */
+export type Snapshot = Omit<InferSelectModel<typeof applicationSnapshot>, 'data'>;

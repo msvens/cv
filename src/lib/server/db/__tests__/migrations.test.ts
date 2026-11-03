@@ -22,6 +22,7 @@ describe('migrations', () => {
 		expect([...tables].sort()).toEqual([
 			'application',
 			'application_contact',
+			'application_snapshot',
 			'application_status_change',
 			'letter',
 			'profile',
@@ -57,6 +58,24 @@ describe('migrations', () => {
 			letter_application_id_application_id_fk: 'CASCADE',
 			letter_recipient_contact_id_application_contact_id_fk: 'SET NULL'
 		});
+	});
+
+	it('deletes snapshots with their application, and adds the CV option (0009)', async () => {
+		const rule = await db.execute<{ delete_rule: string }>(
+			sql`select delete_rule from information_schema.referential_constraints where constraint_name = 'application_snapshot_application_id_application_id_fk'`
+		);
+		expect(rule.rows[0].delete_rule).toBe('CASCADE');
+		const column = await db.execute<{ column_default: string }>(
+			sql`select column_default from information_schema.columns where table_name = 'letter' and column_name = 'attach_cv'`
+		);
+		expect(column.rows[0].column_default).toBe('false');
+	});
+
+	it('moves the language from the letter to the application (0010)', async () => {
+		const columns = await db.execute<{ table_name: string; column_default: string }>(
+			sql`select table_name, column_default from information_schema.columns where column_name = 'language' and table_name in ('application', 'letter')`
+		);
+		expect(columns.rows).toEqual([{ table_name: 'application', column_default: "'en'::text" }]);
 	});
 
 	it('keeps settings to one row (0006)', async () => {

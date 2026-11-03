@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
 	formatDateRange,
 	formatDay,
+	formatDayTime,
 	formatIsoDay,
 	formatMonthYear,
 	ownerToday,
@@ -92,6 +93,10 @@ describe('ownerToday', () => {
 describe('formatDay / formatIsoDay', () => {
 	it('formats a timestamp on the owner calendar', () => {
 		expect(formatDay(new Date('2026-10-05T22:30:00Z'))).toBe('6 Oct 2026');
+	});
+
+	it('adds the time on the owner clock, 24-hour', () => {
+		expect(formatDayTime(new Date('2026-10-05T22:30:00Z'))).toBe('6 Oct 2026, 00:30');
 	});
 
 	it('formats a date column without shifting the day', () => {

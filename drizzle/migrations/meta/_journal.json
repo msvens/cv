@@ -64,6 +64,20 @@
       "when": 1792151276355,
       "tag": "0008_nostalgic_bug",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793711416114,
+      "tag": "0009_plain_the_initiative",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793717535770,
+      "tag": "0010_nice_shard",
+      "breakpoints": true
     }
   ]
 }

@@ -2,7 +2,16 @@ import { isHttpError, isRedirect, type RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ownerToday } from '$lib/dates';
-import { application, applicationContact, applicationStatusChange } from '$lib/server/db/schema';
+import {
+	application,
+	applicationContact,
+	applicationSnapshot,
+	applicationStatusChange,
+	letter,
+	profile
+} from '$lib/server/db/schema';
+import { profileSeed } from '$lib/server/db/seed-data';
+import { saveLetter } from '$lib/server/services/letters';
 import { fakeEvent } from '$lib/server/testing/fakeEvent';
 import { db, resetDb } from '$lib/server/testing/testDb';
 import { load as adminLoad } from '../../+page.server';
@@ -46,7 +55,8 @@ const details = {
 	deadline: '2026-10-20',
 	appliedOn: '',
 	notes: '',
-	adText: ''
+	adText: '',
+	language: 'sv'
 };
 
 /** The redirect an action or load throws, as its status and location. */
@@ -108,8 +118,18 @@ describe('application actions', () => {
 		});
 		expect((await db.select().from(application))[0]).toMatchObject({
 			company: 'Spotify',
-			deadline: '2026-10-20'
+			deadline: '2026-10-20',
+			language: 'sv'
 		});
+	});
+
+	it('refuses a language other than English or Swedish', async () => {
+		const result = await detailActions.update(event({ ...details, language: 'de' }, { id }));
+		expect(result).toMatchObject({
+			status: 400,
+			data: { errors: { language: expect.any(Array) } }
+		});
+		expect((await db.select().from(application))[0].language).toBe('en');
 	});
 
 	it('rejects a bad ad link and a bad date as field errors, saving nothing', async () => {
@@ -125,11 +145,20 @@ describe('application actions', () => {
 
 	it('changes the status onto the timeline', async () => {
 		expect(await detailActions.changeStatus(event({ status: 'applied' }, { id }))).toEqual({
-			message: 'Status changed.'
+			message: 'Status changed.',
+			offerSnapshot: true
 		});
 		const changes = await db.select().from(applicationStatusChange);
 		expect(changes.map((c) => c.status)).toEqual(['not_applied', 'applied']);
 		expect((await db.select().from(application))[0].appliedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+	});
+
+	it('offers a snapshot only when the status becomes Applied', async () => {
+		expect(await detailActions.changeStatus(event({ status: 'interviewing' }, { id }))).toEqual({
+			message: 'Status changed.',
+			offerSnapshot: false
+		});
+		expect(await db.select().from(applicationSnapshot)).toEqual([]);
 	});
 
 	it('refuses an unknown status', async () => {
@@ -225,6 +254,103 @@ describe('contact actions', () => {
 		expect(await detailActions.deleteContact(event(missing, { id }))).toMatchObject({
 			status: 404
 		});
+	});
+});
+
+describe('snapshot actions', () => {
+	beforeEach(async () => {
+		await db.insert(profile).values(profileSeed);
+		await db.update(application).set({ language: 'sv' });
+		await db.insert(letter).values({ applicationId: id, body: 'Hej!' });
+	});
+	const snapshots = () => db.select().from(applicationSnapshot);
+	const save = (form: Record<string, string>) => detailActions.saveSnapshot(event(form, { id }));
+
+	it.each([
+		[
+			'saveSnapshot',
+			() => detailActions.saveSnapshot(event({ what: 'letter' }, { id, as: stranger }))
+		],
+		['deleteSnapshot', () => detailActions.deleteSnapshot(event({ id: '1' }, { id, as: stranger }))]
+	])('%s is a 403 for anyone but the admin', async (_, run) => {
+		await expect(run()).rejects.toSatisfy((e: unknown) => isHttpError(e, 403));
+		expect(await snapshots()).toEqual([]);
+	});
+
+	it("saves the letter PDF as its download renders it, in the application's language", async () => {
+		expect(await save({ what: 'letter' })).toEqual({ message: 'Snapshot saved.' });
+		const [snapshot] = await snapshots();
+		expect(snapshot).toMatchObject({
+			applicationId: id,
+			kind: 'letter',
+			language: 'sv',
+			filename: 'martin-svensson-letter-klarna.pdf'
+		});
+		expect(Buffer.from(snapshot.data).subarray(0, 5).toString()).toBe('%PDF-');
+	});
+
+	it('records the CV as attached when the letter has it', async () => {
+		await db.update(letter).set({ attachCv: true });
+		await save({ what: 'letter' });
+		expect(await snapshots()).toMatchObject([
+			{ kind: 'letter+cv', filename: 'martin-svensson-letter-cv-klarna.pdf' }
+		]);
+	});
+
+	it("saves the CV alone in the application's language", async () => {
+		await save({ what: 'cv' });
+		expect(await snapshots()).toMatchObject([
+			{ kind: 'cv', language: 'sv', filename: 'martin-svensson-resume-sv.pdf' }
+		]);
+	});
+
+	it('keeps a snapshot byte for byte when the letter is edited afterwards', async () => {
+		await save({ what: 'letter' });
+		const [before] = await snapshots();
+		await saveLetter(id, {
+			body: 'Dear team,',
+			includeContact: true,
+			includeRecipient: true,
+			attachCv: true,
+			recipientContactId: null
+		});
+		const [after] = await snapshots();
+		expect(after).toEqual(before);
+		expect(Buffer.from(after.data).equals(Buffer.from(before.data))).toBe(true);
+	});
+
+	it('refuses anything but the letter or the CV', async () => {
+		for (const what of ['both', '']) expect(await save({ what })).toMatchObject({ status: 400 });
+		expect(await snapshots()).toEqual([]);
+	});
+
+	it('reports a missing letter', async () => {
+		await db.delete(letter);
+		expect(await save({ what: 'letter' })).toMatchObject({ status: 404 });
+	});
+
+	it("deletes a snapshot, but not another application's", async () => {
+		await save({ what: 'letter' });
+		const [{ id: snapshotId }] = await snapshots();
+		const [{ id: other }] = await db
+			.insert(application)
+			.values({ company: 'Spotify', role: 'Developer' })
+			.returning();
+		const wrong = await detailActions.deleteSnapshot(
+			event({ id: String(snapshotId) }, { id: other })
+		);
+		expect(wrong).toMatchObject({ status: 404 });
+		expect(await detailActions.deleteSnapshot(event({ id: String(snapshotId) }, { id }))).toEqual({
+			message: 'Snapshot deleted.'
+		});
+		expect(await snapshots()).toEqual([]);
+	});
+
+	it('lists the snapshots on the page without their bytes', async () => {
+		await save({ what: 'letter' });
+		const data = await detailLoad(fakeEvent({ params: { id: String(id) } }));
+		expect(data).toMatchObject({ snapshots: [{ kind: 'letter' }] });
+		expect(data && data.snapshots[0]).not.toHaveProperty('data');
 	});
 });
 

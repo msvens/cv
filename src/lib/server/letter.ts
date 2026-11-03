@@ -3,7 +3,7 @@ import type { MdBlock } from '$lib/markdown';
 import { parseMarkdown } from '$lib/markdownParse';
 import type { ApplicationContact, ApplicationData, Letter, ProfileData } from '$lib/types';
 
-/** The letter's sender: the profile's details, in the letter's language. */
+/** The letter's sender: the profile's details, in the application's language. */
 export interface Person {
 	name: string;
 	title: string;
@@ -19,7 +19,7 @@ export interface Recipient {
 	role: string | null;
 }
 
-/** A letter resolved for its own language: what `buildLetterDoc` lays out. */
+/** A letter resolved for its application's language: what `buildLetterDoc` lays out. */
 export interface LetterParts {
 	lang: Language;
 	sender: Person | null;
@@ -28,7 +28,7 @@ export interface LetterParts {
 }
 
 /**
- * Everything language-dependent in a letter is decided here, by the letter's own language and
+ * Everything language-dependent in a letter is decided here, by the application's language and
  * never the visitor's (R7): the profile's title and location. The recipient contact is looked up
  * among this application's contacts only.
  */
@@ -38,7 +38,7 @@ export function letterParts(
 	contacts: ApplicationContact[],
 	profile: ProfileData
 ): LetterParts {
-	const lang = resolveLanguage(letter.language);
+	const lang = resolveLanguage(application.language);
 	const sv = lang === 'sv';
 	const contact = contacts.find(
 		(c) => c.id === letter.recipientContactId && c.applicationId === application.id

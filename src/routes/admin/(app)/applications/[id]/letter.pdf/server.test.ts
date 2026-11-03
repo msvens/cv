@@ -1,4 +1,5 @@
 import { isHttpError } from '@sveltejs/kit';
+import type { Content } from 'pdfmake/interfaces';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { profileSeed } from '$lib/server/db/seed-data';
 import { application, letter, profile } from '$lib/server/db/schema';
@@ -35,7 +36,7 @@ const get = (opts: { as?: typeof admin | null; app?: number } = {}) =>
 	GET(
 		fakeEvent<Parameters<typeof GET>[0]>({
 			url: `http://localhost/admin/applications/${id}/letter.pdf`,
-			// The visitor's language is Swedish; the letter is English and must win.
+			// The visitor's language is Swedish; the application is English and must win.
 			cookies: { lang: 'sv' },
 			locals: { user: opts.as === undefined ? admin : opts.as, lang: 'sv' },
 			params: { id: String(opts.app ?? id) }
@@ -54,7 +55,6 @@ beforeEach(async () => {
 		.returning();
 	await db.insert(letter).values({
 		applicationId: id,
-		language: 'en',
 		body: 'Dear team,',
 		includeContact: true
 	});
@@ -80,12 +80,35 @@ describe('GET letter.pdf', () => {
 		expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
 	});
 
-	it("follows the letter's language, not the visitor's", async () => {
+	it("follows the application's language, not the visitor's", async () => {
 		await get();
 		const doc = text(vi.mocked(renderPdf).mock.calls[0][0].content);
 		expect(doc).toContain('Engineering Director');
 		expect(doc).toContain('Stockholm, Sweden');
 		expect(doc).not.toContain('Teknikchef');
+	});
+
+	it("appends the CV in the application's language when the letter attaches it", async () => {
+		await db.update(letter).set({ attachCv: true });
+		const res = await get();
+		expect(res.headers.get('content-disposition')).toBe(
+			'inline; filename="martin-svensson-letter-cv-klarna-bank.pdf"'
+		);
+		const content = vi.mocked(renderPdf).mock.calls[0][0].content as Content[];
+		const cv = content.at(-1);
+		expect(cv).toMatchObject({ pageBreak: 'before' });
+		// The visitor is Swedish; the application, and so the CV, is English.
+		expect(text(cv)).toContain('PROFILE');
+		expect(text(content)).not.toContain('Teknikchef');
+	});
+
+	it("writes a Swedish application's letter and CV in Swedish", async () => {
+		await db.update(letter).set({ attachCv: true });
+		await db.update(application).set({ language: 'sv' });
+		await get();
+		const doc = text(vi.mocked(renderPdf).mock.calls[0][0].content);
+		expect(doc).toContain('Teknikchef');
+		expect(doc).not.toContain('PROFILE');
 	});
 
 	it('is a 404 without a letter', async () => {

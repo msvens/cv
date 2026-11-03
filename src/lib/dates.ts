@@ -47,6 +47,16 @@ export function ownerToday(now: Date = new Date()): string {
 	return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
+/** "6 Oct 2026, 00:30" for the English-only admin: a moment on the owner's clock. */
+export function formatDayTime(date: Date): string {
+	const time = date.toLocaleTimeString('en-GB', {
+		hour: '2-digit',
+		minute: '2-digit',
+		timeZone: OWNER_TIMEZONE
+	});
+	return `${formatDay(date)}, ${time}`;
+}
+
 /** "6 Oct 2026" for the English-only admin: a timestamp on the owner's calendar. */
 export function formatDay(date: Date): string {
 	return date.toLocaleDateString('en-GB', {

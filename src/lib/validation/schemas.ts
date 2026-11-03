@@ -88,7 +88,8 @@ export const applicationSchema = z.object({
 	deadline: isoDate.or(blank),
 	appliedOn: isoDate.or(blank),
 	notes: z.string(),
-	adText: z.string()
+	adText: z.string(),
+	language: z.enum(['en', 'sv'], 'English or Swedish')
 });
 
 /** Only the two fields the list page's "New application" form asks for. */
@@ -105,11 +106,11 @@ export const contactSchema = z.object({
 });
 
 export const letterSchema = z.object({
-	language: z.enum(['en', 'sv'], 'English or Swedish'),
 	// Empty is fine: a draft can be saved before it has any text.
 	body: z.string(),
 	includeContact: z.boolean(),
 	includeRecipient: z.boolean(),
+	attachCv: z.boolean(),
 	recipientContactId: z.number().int().positive().nullable()
 });
 

@@ -18,7 +18,8 @@ export function applicationValues(form: FormData) {
 		deadline: text(form, 'deadline'),
 		appliedOn: text(form, 'appliedOn'),
 		notes: text(form, 'notes'),
-		adText: text(form, 'adText')
+		adText: text(form, 'adText'),
+		language: text(form, 'language')
 	};
 }
 
@@ -36,10 +37,10 @@ export function contactValues(form: FormData) {
 /** The letter page's form. The recipient select sends '' for "the company only". */
 export function letterValues(form: FormData) {
 	return {
-		language: text(form, 'language'),
 		body: text(form, 'body'),
 		includeContact: checkbox(form, 'includeContact'),
 		includeRecipient: checkbox(form, 'includeRecipient'),
+		attachCv: checkbox(form, 'attachCv'),
 		recipientContactId: positiveInt(form, 'recipientContactId')
 	};
 }
