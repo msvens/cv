@@ -2,10 +2,12 @@
 
 Martin Svensson's resume site: a public, bilingual (English/Swedish) CV page, a downloadable PDF,
 and a GitHub-protected admin for editing the content, which lives in Postgres. Edits show up
-immediately: no rebuild or redeploy.
+immediately: no rebuild or redeploy. The admin also tracks job applications privately: status,
+deadlines, contacts, a personal letter and a frozen copy of what was sent.
 
 Built with SvelteKit (Svelte 5) as a full-stack app with server-side rendering, running on
-Node. It replaces an earlier Next.js version, [msvens/resume](https://github.com/msvens/resume).
+Node. It replaces an earlier Next.js version,
+[msvens/resume](https://github.com/msvens/resume), which is deprecated.
 
 ## Stack
 
@@ -39,6 +41,32 @@ Node. It replaces an earlier Next.js version, [msvens/resume](https://github.com
   an existing image URL
 - **Profile links:** GitHub and LinkedIn usernames, each with a show/hide switch. GitHub is
   filled in from the admin's login when empty.
+
+### Job applications (admin only)
+
+Private to the signed-in admin. Nothing about applications is ever sent to anyone else, on any
+page or PDF.
+
+- **Applications list:** active applications by deadline, closed ones (accepted, rejected,
+  withdrawn) apart. Signing in lands here.
+- **Status timeline:** Not applied → Applied → Interviewing → Offer → Accepted / Rejected /
+  Withdrawn, every change recorded with its date. Moving to Applied fills in the applied date.
+- **Needs attention:** an unapplied application whose deadline is within the attention window
+  (7 days by default, set in Settings) or has passed. Shown at the top of the list, as a count
+  in the admin nav, and as a slim notice on the public pages, for the admin only.
+- **Details:** company, role, language (English/Swedish), location, ad link, the ad's text
+  (kept in case the ad is taken down), deadline and notes.
+- **Contacts:** the people involved, each with role, email, phone and a note.
+- **Personal letter:** one per application, in markdown with the editor's live preview. It can
+  start as a copy of an earlier letter. Its PDF is in the CV's style, optionally with your
+  contact details at the top, a recipient (the company and a contact), and **your CV appended**
+  as one combined PDF.
+- **One language per application:** the letter, the attached CV and a CV-only snapshot all
+  follow the application's language, never the site's current language.
+- **Snapshots:** "Save what I sent" stores the PDF exactly as it was sent (the letter, the
+  letter + CV, or the CV alone). Offered when the status becomes Applied; never automatic. Later
+  edits to the letter or the CV don't change a snapshot. Download or delete them from the
+  application page.
 
 ## Prerequisites
 
@@ -104,9 +132,10 @@ These are read by `adapter-node` itself in production, not by the app:
 
 ## Admin and GitHub OAuth
 
-The admin at `/admin` lets you edit the profile, the photo, sections and items. Only the GitHub
-account whose numeric ID is `ADMIN_GITHUB_ID` can sign in. Anyone else is refused at sign-in, and
-every admin page and action checks again.
+The admin at `/admin` has the job applications, the profile and photo, the sections and items,
+and the settings. Only the GitHub account whose numeric ID is `ADMIN_GITHUB_ID` can sign in.
+Anyone else is refused at sign-in, and every admin page, action and PDF endpoint checks again.
+Everything sent to the signed-in admin carries `Cache-Control: private, no-store`.
 
 1. Create a GitHub OAuth app at <https://github.com/settings/developers>.
 2. Set its callback URL to `<BETTER_AUTH_URL>/api/auth/callback/github`, e.g.
@@ -144,10 +173,16 @@ src/
     admin/
       signin/                         # GitHub sign-in
       signout/+server.ts
-      (app)/                          # signed-in admin: profile, sections, sections/[id]
+      (app)/                          # signed-in admin
+        applications/                 # list; [id]: details, contacts, snapshots
+          [id]/letter/                # letter editor
+          [id]/letter.pdf/            # letter (+ CV) PDF
+          [id]/snapshots/[sid]/       # a saved snapshot's PDF
+        profile/  sections/  settings/
   lib/
     components/                 # layout (TopBar, Footer), resume, admin
-    server/                     # server-only: db, services, auth, pdf, forms, photo
+    server/                     # server-only: db, services, auth, pdf, forms, photo,
+                                #   applicationPdf.ts (every PDF sent with an application)
     validation/schemas.ts       # zod schemas for the admin forms
     markdown*.ts                # safe markdown tree, parser, editor helpers
     translations.ts             # UI strings (en/sv; the admin is English-only)
@@ -158,17 +193,31 @@ static/                         # favicon, default profile.jpg
 
 ## Database
 
-Four tables:
+The resume:
 
 - **`profile`:** one row with name, title (EN/SV), email, phone, location (EN/SV), GitHub and
   LinkedIn usernames plus show switches, photo URL, availability, bio (EN/SV), `updated_at`
-  (shown in the footer)
+  (shown in the footer; job-application changes never move it)
 - **`profile_photo`:** the uploaded photo, at most one row: a processed JPEG, served at
   `/photo?v=…`
 - **`section`:** slug, label (EN/SV), display type (`entries`/`chips`), `visible`,
   `show_in_pdf`, sort order
 - **`section_item`:** belongs to a section: title, subtitle and description (EN/SV), start and
   end dates, link, sort order
+
+Job applications (deleting an application deletes everything below it):
+
+- **`application`:** company, role, status, language, ad link and text, location, deadline,
+  applied date, notes
+- **`application_status_change`:** the timeline, one row per status the application has had
+- **`application_contact`:** name, role, email, phone, note
+- **`letter`:** at most one per application: the markdown body and the PDF options (contact
+  details, recipient, attach the CV)
+- **`application_snapshot`:** a frozen PDF (`bytea`) with its kind, language, filename and date
+- **`settings`:** one row, one typed column per setting (the attention window)
+
+Statuses, languages and snapshot kinds are plain text checked in code, so adding one needs no
+migration.
 
 Change the schema in `src/lib/server/db/schema.ts`, then run `pnpm db:generate` to create a new
 migration. Never edit an existing migration.
