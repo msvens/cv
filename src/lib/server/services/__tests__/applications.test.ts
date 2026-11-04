@@ -32,7 +32,8 @@ const details: ApplicationInput = {
 	deadline: '2026-10-20',
 	appliedOn: '',
 	notes: '',
-	adText: ''
+	adText: '',
+	language: 'sv'
 };
 const anna: ContactInput = {
 	name: 'Anna Berg',
@@ -61,6 +62,7 @@ describe('applications service', () => {
 		expect(await updateApplication(id, details)).toBe('ok');
 		expect(await getApplication(id)).toMatchObject({
 			company: 'Spotify',
+			language: 'sv',
 			location: 'Stockholm',
 			deadline: '2026-10-20',
 			adUrl: null,

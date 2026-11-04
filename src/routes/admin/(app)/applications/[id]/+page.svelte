@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { STATUSES, STATUS_LABELS, attentionLabel, statusLabel } from '$lib/applications';
+	import {
+		LANGUAGE_NAMES,
+		STATUSES,
+		STATUS_LABELS,
+		attentionLabel,
+		languageName,
+		statusLabel
+	} from '$lib/applications';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import ContactFields from '$lib/components/admin/ContactFields.svelte';
 	import DeleteButton from '$lib/components/admin/DeleteButton.svelte';
@@ -8,8 +15,9 @@
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import SubmitButton from '$lib/components/admin/SubmitButton.svelte';
 	import TextField from '$lib/components/admin/TextField.svelte';
-	import { formatDay } from '$lib/dates';
+	import { formatDay, formatDayTime } from '$lib/dates';
 	import { safeHref } from '$lib/markdown';
+	import { snapshotLabel } from '$lib/snapshots';
 
 	let { data, form } = $props();
 
@@ -49,6 +57,16 @@
 
 	let saving = $state(false);
 	let changing = $state(false);
+	let savingSnapshot = $state(false);
+	const snapshotting: SubmitFunction = () => {
+		savingSnapshot = true;
+		return async ({ update }) => {
+			await update();
+			savingSnapshot = false;
+		};
+	};
+	// Offered right after a move to Applied (R8); goes away with the next submission.
+	const offerSnapshot = $derived(form && 'offerSnapshot' in form && form.offerSnapshot);
 
 	const tag = {
 		overdue:
@@ -59,6 +77,9 @@
 	const heading = 'font-medium text-neutral-900 dark:text-neutral-100';
 	const field =
 		'w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100';
+	// A select sized to its options, for the inline status row.
+	const inlineSelect =
+		'rounded border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100';
 	const label = 'mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300';
 	const quiet = 'text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100';
 </script>
@@ -73,7 +94,7 @@
 		<DeleteButton
 			action="?/delete"
 			label="Delete application"
-			confirmText="Delete “{a.company} · {a.role}” with its timeline, contacts and letter?"
+			confirmText="Delete “{a.company} · {a.role}” with its timeline, contacts, letter and snapshots?"
 		/>
 	{/snippet}
 </PageHeader>
@@ -104,7 +125,7 @@
 			}}
 		>
 			<label for="status" class="sr-only">Status</label>
-			<select id="status" name="status" value={a.status} class="{field} w-auto">
+			<select id="status" name="status" value={a.status} class={inlineSelect}>
 				{#each STATUSES as status (status)}
 					<option value={status}>{STATUS_LABELS[status]}</option>
 				{/each}
@@ -144,6 +165,16 @@
 				errors={errors.company}
 			/>
 			<TextField label="Role" name="role" value={v.role} required errors={errors.role} />
+			<div>
+				<label for="language" class={label}>Language</label>
+				<select id="language" name="language" value={v.language} class={field}>
+					{#each Object.entries(LANGUAGE_NAMES) as [lang, name] (lang)}
+						<option value={lang}>{name}</option>
+					{/each}
+				</select>
+				<p class="mt-1 text-xs text-neutral-500">The letter and the CV you send follow it.</p>
+				{#if errors.language}<FormMessage text={errors.language[0]} />{/if}
+			</div>
 			<TextField label="Location" name="location" value={v.location} errors={errors.location} />
 			<TextField
 				label="Link to the ad"
@@ -281,7 +312,7 @@
 		{#if data.letter}
 			<div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
 				<p class="text-neutral-600 dark:text-neutral-400">
-					{data.letter.language === 'sv' ? 'Swedish' : 'English'} · updated {formatDay(
+					{languageName(a.language)}{data.letter.attachCv ? ' · with CV' : ''} · updated {formatDay(
 						data.letter.updatedAt
 					)}
 				</p>
@@ -298,4 +329,70 @@
 			>
 		{/if}
 	</section>
+
+	<section class={box} aria-labelledby="snapshots-heading">
+		<h2 id="snapshots-heading" class={heading}>Snapshots</h2>
+		<p class="text-sm text-neutral-500">
+			A frozen copy of what you sent. Later edits to the letter or the CV don't change it.
+		</p>
+		{#if offerSnapshot}
+			<div
+				class="space-y-3 rounded border border-sky-300 bg-sky-50 p-3 text-sm dark:border-sky-800 dark:bg-sky-950/30"
+			>
+				<p class="font-medium text-sky-900 dark:text-sky-200">
+					Marked as Applied. Save what you sent?
+				</p>
+				{@render saveButtons()}
+			</div>
+		{:else}
+			{@render saveButtons()}
+		{/if}
+		{#if data.snapshots.length === 0}
+			<p class="text-sm text-neutral-500">No snapshots yet.</p>
+		{:else}
+			<ul class="space-y-2">
+				{#each data.snapshots as snapshot (snapshot.id)}
+					<li
+						class="flex items-center gap-3 rounded border border-neutral-200 p-3 text-sm dark:border-neutral-800"
+					>
+						<a
+							class="min-w-0 flex-1 underline"
+							href="/admin/applications/{a.id}/snapshots/{snapshot.id}"
+							target="_blank">{snapshotLabel(snapshot.kind)}</a
+						>
+						<span class="text-neutral-500"
+							>{languageName(snapshot.language)} · {formatDayTime(snapshot.createdAt)}</span
+						>
+						<DeleteButton
+							action="?/deleteSnapshot"
+							id={snapshot.id}
+							label="Delete snapshot"
+							confirmText="Delete the {snapshotLabel(snapshot.kind)} snapshot from {formatDayTime(
+								snapshot.createdAt
+							)}? It can't be recreated."
+						/>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</section>
 </div>
+
+{#snippet saveButtons()}
+	<!-- Both in the application's language, set in Details. -->
+	<div class="flex flex-wrap items-center gap-2">
+		{#if data.letter}
+			<form method="POST" action="?/saveSnapshot" use:enhance={snapshotting}>
+				<input type="hidden" name="what" value="letter" />
+				<SubmitButton
+					pending={savingSnapshot}
+					label={data.letter.attachCv ? 'Save the letter + CV' : 'Save the letter'}
+				/>
+			</form>
+		{/if}
+		<form method="POST" action="?/saveSnapshot" use:enhance={snapshotting}>
+			<input type="hidden" name="what" value="cv" />
+			<SubmitButton pending={savingSnapshot} label="Save the CV only" />
+		</form>
+	</div>
+{/snippet}

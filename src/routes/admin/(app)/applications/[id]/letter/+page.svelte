@@ -5,26 +5,24 @@
 	import MarkdownEditor from '$lib/components/admin/MarkdownEditor.svelte';
 	import PageHeader from '$lib/components/admin/PageHeader.svelte';
 	import SubmitButton from '$lib/components/admin/SubmitButton.svelte';
+	import { languageName } from '$lib/applications';
 	import { formatDay } from '$lib/dates';
 
 	let { data, form } = $props();
 
 	const a = $derived(data.application);
 	const appHref = $derived(`/admin/applications/${a.id}`);
-	// After a failed save, show what was submitted (with the errors); otherwise the stored letter.
+	// After a failed save, show what was submitted; otherwise the stored letter.
 	const failed = $derived(form && 'values' in form && form.values ? form.values : null);
 	const v = $derived(
 		failed ??
 			data.letter ?? {
-				language: 'en',
 				body: '',
 				includeContact: false,
 				includeRecipient: false,
+				attachCv: false,
 				recipientContactId: null
 			}
-	);
-	const errors: Partial<Record<string, string[]>> = $derived(
-		(form && 'errors' in form && form.errors) || {}
 	);
 	// Shows the recipient select while ticked; follows the stored value after each save.
 	let includeRecipient = $derived(v.includeRecipient);
@@ -32,10 +30,6 @@
 	let saving = $state(false);
 	let copying = $state(false);
 
-	const LANGUAGES = [
-		{ value: 'en', label: 'English' },
-		{ value: 'sv', label: 'Swedish' }
-	];
 	const box = 'max-w-3xl space-y-4 rounded border border-neutral-200 p-4 dark:border-neutral-800';
 	const heading = 'font-medium text-neutral-900 dark:text-neutral-100';
 	const field =
@@ -94,14 +88,14 @@
 				<select id="from" name="from" class={field}>
 					{#each data.sources as source (source.applicationId)}
 						<option value={source.applicationId}>
-							{source.company} · {source.role} ({source.language === 'sv' ? 'Swedish' : 'English'},
+							{source.company} · {source.role} ({languageName(source.language)},
 							{formatDay(source.updatedAt)})
 						</option>
 					{/each}
 				</select>
 				<SubmitButton pending={copying} label="Copy" />
 			</div>
-			<p class="text-sm text-neutral-500">Copies the text and language; edit freely afterwards.</p>
+			<p class="text-sm text-neutral-500">Copies the text; edit freely afterwards.</p>
 		</form>
 	{/if}
 
@@ -118,25 +112,10 @@
 			};
 		}}
 	>
-		<fieldset>
-			<legend class="mb-1 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-				Language
-			</legend>
-			<div class="flex gap-4">
-				{#each LANGUAGES as lang (lang.value)}
-					<label class={option}>
-						<input
-							type="radio"
-							name="language"
-							value={lang.value}
-							checked={v.language === lang.value}
-						/>
-						{lang.label}
-					</label>
-				{/each}
-			</div>
-			{#if errors.language}<FormMessage text={errors.language[0]} />{/if}
-		</fieldset>
+		<p class="text-sm text-neutral-600 dark:text-neutral-400">
+			Written in {languageName(a.language)}, the application's language (set in
+			<a class="underline" href="/admin/applications/{a.id}">its details</a>).
+		</p>
 
 		<MarkdownEditor name="body" value={v.body} rows={18} label="Letter (Markdown)" />
 
@@ -178,6 +157,10 @@
 				<!-- Kept while the recipient is off, so ticking it again restores the choice. -->
 				<input type="hidden" name="recipientContactId" value={v.recipientContactId} />
 			{/if}
+			<label class={option}>
+				<input type="checkbox" name="attachCv" checked={v.attachCv} class="rounded" />
+				My CV after the letter
+			</label>
 		</fieldset>
 	</form>
 </div>

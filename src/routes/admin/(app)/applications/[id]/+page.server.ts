@@ -2,6 +2,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { attention } from '$lib/applications';
 import { ownerToday } from '$lib/dates';
 import { applicationId, applicationValues, contactValues } from '$lib/server/applicationForms';
+import { applicationCvPdf, letterPdf } from '$lib/server/applicationPdf';
 import { requireAdmin } from '$lib/server/auth/admin';
 import { invalid, positiveInt, text } from '$lib/server/forms';
 import {
@@ -17,18 +18,22 @@ import {
 } from '$lib/server/services/applications';
 import { getLetter } from '$lib/server/services/letters';
 import { getSettings } from '$lib/server/services/settings';
+import { deleteSnapshot, listSnapshots, saveSnapshot } from '$lib/server/services/snapshots';
 import { applicationSchema, contactSchema, statusSchema } from '$lib/validation/schemas';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const id = applicationId(params.id);
-	const [application, timeline, contacts, letter, { attentionDays }] = await Promise.all([
-		getApplication(id),
-		listStatusChanges(id),
-		listContacts(id),
-		getLetter(id),
-		getSettings()
-	]);
+	const [application, timeline, contacts, letter, snapshots, { attentionDays }] = await Promise.all(
+		[
+			getApplication(id),
+			listStatusChanges(id),
+			listContacts(id),
+			getLetter(id),
+			listSnapshots(id),
+			getSettings()
+		]
+	);
 	if (!application) error(404, 'No such application');
 	// Same rule as the list and the front-page notice, so they never disagree.
 	return {
@@ -36,6 +41,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		timeline,
 		contacts,
 		letter,
+		snapshots,
 		attention: attention(application, ownerToday(), attentionDays)
 	};
 };
@@ -61,7 +67,8 @@ export const actions: Actions = {
 		const parsed = statusSchema.safeParse(text(await event.request.formData(), 'status'));
 		if (!parsed.success) return fail(400, { error: 'Unknown status.' });
 		if ((await changeStatus(id, parsed.data, ownerToday())) === 'not-found') return gone();
-		return { message: 'Status changed.' };
+		// R8: Applied is when something was sent, so the page offers to save it. Never automatic.
+		return { message: 'Status changed.', offerSnapshot: parsed.data === 'applied' };
 	},
 
 	delete: async (event) => {
@@ -69,6 +76,33 @@ export const actions: Actions = {
 		const id = applicationId(event.params.id);
 		if ((await deleteApplication(id)) === 'not-found') return gone();
 		redirect(303, '/admin/applications');
+	},
+
+	/**
+	 * Freeze what was sent (R8): `what=letter` is the letter PDF exactly as its download renders
+	 * it now (with the CV if attached); `what=cv` is the CV alone. Both in the application's
+	 * language.
+	 */
+	saveSnapshot: async (event) => {
+		requireAdmin(event);
+		const id = applicationId(event.params.id);
+		const form = await event.request.formData();
+		const what = text(form, 'what');
+		if (what !== 'letter' && what !== 'cv')
+			return fail(400, { error: 'Choose the letter or the CV.' });
+		const rendered = what === 'cv' ? await applicationCvPdf(id) : await letterPdf(id);
+		if (!rendered) return gone(what === 'cv' ? 'application' : 'letter');
+		if ((await saveSnapshot(id, rendered)) === 'not-found') return gone();
+		return { message: 'Snapshot saved.' };
+	},
+
+	deleteSnapshot: async (event) => {
+		requireAdmin(event);
+		const id = applicationId(event.params.id);
+		const snapshotId = positiveInt(await event.request.formData(), 'id');
+		if (!snapshotId || (await deleteSnapshot(id, snapshotId)) === 'not-found')
+			return gone('snapshot');
+		return { message: 'Snapshot deleted.' };
 	},
 
 	addContact: async (event) => {

@@ -21,7 +21,7 @@ const profile: ProfileData = {
 	bioSv: '',
 	updatedAt: new Date()
 };
-const application = { id: 7, company: 'Spotify' } as ApplicationData;
+const application = { id: 7, company: 'Spotify', language: 'en' } as ApplicationData;
 const anna: ApplicationContact = {
 	id: 3,
 	applicationId: 7,
@@ -35,19 +35,20 @@ const anna: ApplicationContact = {
 const letter = (over: Partial<Letter> = {}): Letter => ({
 	id: 1,
 	applicationId: 7,
-	language: 'en',
 	body: 'Hello **there**.',
 	includeContact: true,
 	includeRecipient: true,
+	attachCv: false,
 	recipientContactId: 3,
 	createdAt: new Date(),
 	updatedAt: new Date(),
 	...over
 });
-const parts = (l: Letter, contacts = [anna]) => letterParts(l, application, contacts, profile);
+const parts = (l: Letter, contacts = [anna], app: ApplicationData = application) =>
+	letterParts(l, app, contacts, profile);
 
 describe('letterParts', () => {
-	it('is all English for an English letter', () => {
+	it('is all English for an English application', () => {
 		expect(parts(letter())).toMatchObject({
 			lang: 'en',
 			sender: {
@@ -61,8 +62,8 @@ describe('letterParts', () => {
 		});
 	});
 
-	it('is all Swedish for a Swedish letter: title and location', () => {
-		expect(parts(letter({ language: 'sv' }))).toMatchObject({
+	it('is all Swedish for a Swedish application: title and location', () => {
+		expect(parts(letter(), [anna], { ...application, language: 'sv' })).toMatchObject({
 			lang: 'sv',
 			sender: { title: 'Teknikchef', location: 'Stockholm, Sverige' }
 		});

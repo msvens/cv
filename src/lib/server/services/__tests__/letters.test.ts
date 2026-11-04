@@ -9,10 +9,10 @@ import { copyLetter, deleteLetter, getLetter, listLetterSources, saveLetter } fr
 vi.mock('$lib/server/db/client', () => import('$lib/server/testing/testDb'));
 
 const draft: LetterInput = {
-	language: 'sv',
 	body: 'Hej!',
 	includeContact: true,
 	includeRecipient: true,
+	attachCv: false,
 	recipientContactId: null
 };
 
@@ -24,7 +24,7 @@ beforeEach(async () => {
 	[{ id: klarna }, { id: spotify }] = await db
 		.insert(application)
 		.values([
-			{ company: 'Klarna', role: 'Developer', updatedAt: new Date('2026-01-01') },
+			{ company: 'Klarna', role: 'Developer', language: 'sv', updatedAt: new Date('2026-01-01') },
 			{ company: 'Spotify', role: 'Lead', updatedAt: new Date('2026-01-01') }
 		])
 		.returning();
@@ -45,7 +45,7 @@ describe('letters', () => {
 			await saveLetter(klarna, { ...draft, body: 'Hej igen!', recipientContactId: anna })
 		).toBe('ok');
 		expect(await db.select().from(letter)).toMatchObject([
-			{ applicationId: klarna, language: 'sv', body: 'Hej igen!', recipientContactId: anna }
+			{ applicationId: klarna, body: 'Hej igen!', recipientContactId: anna }
 		]);
 	});
 
@@ -95,10 +95,9 @@ describe('letters', () => {
 			expect(await listLetterSources(klarna)).toEqual([]);
 		});
 
-		it('copies the text and language only', async () => {
+		it('copies the text only', async () => {
 			expect(await copyLetter(spotify, klarna)).toBe('ok');
 			expect(await getLetter(spotify)).toMatchObject({
-				language: 'sv',
 				body: 'Hej!',
 				includeContact: false,
 				includeRecipient: false,

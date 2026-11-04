@@ -92,6 +92,11 @@ export const application = pgTable('application', {
 	company: text('company').notNull(),
 	role: text('role').notNull(),
 	status: text('status').notNull().default('not_applied'),
+	/**
+	 * What the application is written in ('en' | 'sv', checked in code): its letter, the CV
+	 * attached to it and any CV snapshot all follow it, never the visitor's language (R7).
+	 */
+	language: text('language').notNull().default('en'),
 	adUrl: text('ad_url'),
 	adText: text('ad_text'),
 	location: text('location'),
@@ -136,7 +141,7 @@ export const applicationContact = pgTable(
 
 /**
  * An application's personal letter: at most one (the unique application_id). The PDF options are
- * stored, so the same letter always renders the same PDF. Language is `text`, checked in code.
+ * stored, so the same letter always renders the same PDF. Its language is the application's.
  */
 export const letter = pgTable('letter', {
 	id: serial('id').primaryKey(),
@@ -144,10 +149,11 @@ export const letter = pgTable('letter', {
 		.notNull()
 		.unique()
 		.references(() => application.id, { onDelete: 'cascade' }),
-	language: text('language').notNull(),
 	body: text('body').notNull().default(''),
 	includeContact: boolean('include_contact').notNull().default(false),
 	includeRecipient: boolean('include_recipient').notNull().default(false),
+	/** Append the CV, in the application's language, after the letter in one PDF. */
+	attachCv: boolean('attach_cv').notNull().default(false),
 	/** Deleting the contact leaves the letter addressed to the company only. */
 	recipientContactId: integer('recipient_contact_id').references(() => applicationContact.id, {
 		onDelete: 'set null'
@@ -155,6 +161,28 @@ export const letter = pgTable('letter', {
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+/**
+ * A PDF exactly as it was sent (R8): rendered once when saved and never changed, so later edits
+ * to the letter or the CV can't touch it. `kind` and `language` are text, checked in code
+ * ($lib/snapshots). The filename is stored too, so renaming the profile or the company doesn't
+ * rename an old snapshot. List queries never select `data`.
+ */
+export const applicationSnapshot = pgTable(
+	'application_snapshot',
+	{
+		id: serial('id').primaryKey(),
+		applicationId: integer('application_id')
+			.notNull()
+			.references(() => application.id, { onDelete: 'cascade' }),
+		kind: text('kind').notNull(),
+		language: text('language').notNull(),
+		filename: text('filename').notNull(),
+		data: bytea('data').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [index('application_snapshot_application_idx').on(t.applicationId)]
+);
 
 /**
  * Site settings: one row (the CHECK makes that a database rule), one typed column per setting,

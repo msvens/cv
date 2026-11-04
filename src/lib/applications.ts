@@ -1,3 +1,12 @@
+import type { Language } from '$lib/i18n';
+
+/** An application's language as the English-only admin names it. */
+export const LANGUAGE_NAMES: Record<Language, string> = { en: 'English', sv: 'Swedish' };
+
+export function languageName(lang: string): string {
+	return (LANGUAGE_NAMES as Record<string, string>)[lang] ?? lang;
+}
+
 /** Every status, in the order an application usually moves through them. */
 export const STATUSES = [
 	'not_applied',

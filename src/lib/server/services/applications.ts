@@ -52,6 +52,7 @@ export async function updateApplication(
 			appliedOn: nullIfBlank(data.appliedOn),
 			notes: nullIfBlank(data.notes),
 			adText: nullIfBlank(data.adText),
+			language: data.language,
 			updatedAt: new Date()
 		})
 		.where(eq(application.id, id))

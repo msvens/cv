@@ -71,7 +71,7 @@ export function listLetterSources(exceptApplicationId: number): Promise<LetterSo
 			applicationId: letter.applicationId,
 			company: application.company,
 			role: application.role,
-			language: letter.language,
+			language: application.language,
 			updatedAt: letter.updatedAt
 		})
 		.from(letter)
@@ -81,8 +81,9 @@ export function listLetterSources(exceptApplicationId: number): Promise<LetterSo
 }
 
 /**
- * Start the application's letter as a copy of another application's: body and language only.
- * The options stay at their defaults, since the recipient belonged to the other application.
+ * Start the application's letter as a copy of another application's: the body only. The
+ * language is this application's, and the options stay at their defaults, since the recipient
+ * belonged to the other application.
  * Only for an application without a letter ('exists' otherwise).
  */
 export function copyLetter(
@@ -91,7 +92,7 @@ export function copyLetter(
 ): Promise<'ok' | 'not-found' | 'exists'> {
 	return db.transaction(async (tx) => {
 		const [source] = await tx
-			.select({ language: letter.language, body: letter.body })
+			.select({ body: letter.body })
 			.from(letter)
 			.where(eq(letter.applicationId, fromApplicationId));
 		if (!source || fromApplicationId === applicationId) return 'not-found';

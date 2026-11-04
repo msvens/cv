@@ -35,7 +35,7 @@ const event = <E extends RequestEvent>(
 		form
 	});
 
-const save = { language: 'en', body: 'Dear team,', includeContact: 'on' };
+const save = { body: 'Dear team,', includeContact: 'on' };
 
 beforeEach(async () => {
 	await resetDb();
@@ -46,7 +46,7 @@ beforeEach(async () => {
 			{ company: 'Spotify', role: 'Lead' }
 		])
 		.returning();
-	await db.insert(letter).values({ applicationId: other, language: 'sv', body: 'Hej!' });
+	await db.insert(letter).values({ applicationId: other, body: 'Hej!' });
 });
 
 describe('letter actions', () => {
@@ -65,23 +65,20 @@ describe('letter actions', () => {
 			letter: unknown;
 		};
 		expect(saved).toMatchObject({
-			language: 'en',
 			body: 'Dear team,',
 			includeContact: true,
 			includeRecipient: false,
+			attachCv: false,
 			recipientContactId: null
 		});
 	});
 
-	it('keeps the input when the language is bad', async () => {
-		const result = await actions.save(event({ ...save, language: 'de' }));
-		expect(result).toMatchObject({
-			status: 400,
-			data: {
-				values: { language: 'de', body: 'Dear team,' },
-				errors: { language: expect.any(Array) }
-			}
-		});
+	it('saves the attach-the-CV option', async () => {
+		await actions.save(event({ ...save, attachCv: 'on' }));
+		const { letter: saved } = (await load(fakeEvent({ params: { id: String(id) } }))) as {
+			letter: unknown;
+		};
+		expect(saved).toMatchObject({ attachCv: true });
 	});
 
 	it("refuses another application's contact", async () => {
